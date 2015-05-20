@@ -33,10 +33,13 @@ class BusModule(object):
 
         self.kafkaClient = KafkaClient("%:%" % (host,port))
         self.producer    = SimpleProducer(self.kafkaClient)
+
         # Create a function that has the first method-arg
         # 'self' already built in. It is call with just the
         # single arg 'rawResult':
         self.resultCallback = partial(self.deliverResult, self)
+        
+        self.listenerThreads = {}
      
     def publish(self, busTopicObj, callback=None, auth=None):
         if callback is None:
@@ -51,29 +54,72 @@ class BusModule(object):
         msg = busTopicObj.content.encode('UTF-8', 'ignore')
         self.producer.send_messages(topicName, msg)
 
-    def awaitTopic(self, topicName, deliveryCallback=None, block=False,  timeout=None):
+    def listenForTopic(self, topicName, deliveryCallback=None):
         '''
         Fork a new thread that keeps waiting for any messages
-        on the topic of the given name. If timeout is 
-        
+        on the topic of the given name. Stop listening for the topic
+        by calling dropTropic(). It is OK to call this method multiple
+        times with the same topic name. Only one thread will be forked,
+        but different delivery callback functions may be specified each
+        time. All the functions will be called for each incoming msg
+        on the topic.
+                 
         :param topicName: official name of topic to listen for.
         :type topicName: string
-        :param block: if True, will block  
-        :type block: boolean
-        :param timeout:
-        :type timeout:
+        :param deliveryCallback: a function that takes two args: a topic
+            name, and a topic content string.
+        :type deliveryCallback: function
         '''
-        waitThread = TopicWaiter(topicName, self)
-        if block:
-            waitThread.join(timeout)
-            # Determine whether thread terminated, or timeout occurred:
-            if waitThread.isAlive():
-                return False
-            else:
-                return True
-        return True
+        
+        try:
+            # Does a thread for this msg already exist?
+            existingWaitThread = self.listenerThreads[topicName]
+            # Yep. Check whether the given deliveryCallback is
+            # already among the listeners added earlier:
+            if existingWaitThread.listeners().index(deliveryCallback) > -1:
+                return
+            existingWaitThread.addListener(deliveryCallback)
+            return 
+        except KeyError:
+            # No thread exists yet for this topic:
+            existingWaitThread = TopicWaiter(topicName, self, deliveryCallback)
+            self.listenerThreads[topicName] = existingWaitThread
+
+    def dropTopic(self, topicName, deliveryCallback=None):
+
+        try:
+            # Does a thread for this msg even exist?
+            existingWaitThread = self.listenerThreads[topicName]
+
+            # Yep. Now check whether the given deliveryCallback was
+            # actually added to the listeners earlier:
+
+            existingListeners = existingWaitThread.listeners()
+            if existingListeners.index(deliveryCallback) == -1:
+                # This listener isn't registered, so all done:
+                return
+            
+            existingWaitThread.removeListener(deliveryCallback)
+            return 
+        except KeyError:
+            # No listener exists for this topic at all, so all done:
+            return
     
-    def deliverResult(self, rawResult):
+    def deliverResult(self, topicName, rawResult):
+        '''
+        Simple default message delivery callback. Just prints 
+        topic name and content. Override in subclass to get 
+        more interesting behavior. Remember, though: you (I believe)
+        need to do the functools.partial trick to create a function
+        for your overriding method that already has 'self' curried out.
+        We may be able to simplify that, because the listening threads
+        do save the BusModule objecst that created them.    
+        
+        :param topicName:
+        :type topicName:
+        :param rawResult:
+        :type rawResult:
+        '''
         print('Result: %s' % rawResult)
         
     def close(self):
