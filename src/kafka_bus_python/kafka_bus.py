@@ -220,9 +220,12 @@ class BusAdapter(object):
             # Yep (b/c we didn't bomb out). Check whether the 
             # given deliveryCallback is already among the listeners 
             # added earlier:
-            if existingWaitThread.listeners().index(deliveryCallback) > -1:
-                # If both, a thread and this callback exist, do nothing:
+            try:
+                existingWaitThread.listeners().index(deliveryCallback)
+                # Both, a thread and this callback already exist, do nothing:
                 return
+            except ValueError:
+                pass
             # Thread exists for this topic, but an additional
             # callback is being registered:
             existingWaitThread.addListener(deliveryCallback)
@@ -256,12 +259,15 @@ class BusAdapter(object):
             # earlier:
 
             existingListeners = existingWaitThread.listeners()
-            if existingListeners.index(deliveryCallback) == -1:
+            try:
+                existingListeners.index(deliveryCallback)
+                # The listener to be removed does exist:
+                existingWaitThread.removeListener(deliveryCallback)
+                return 
+            except NameError:
                 # This listener isn't registered, so all done:
                 return
             
-            existingWaitThread.removeListener(deliveryCallback)
-            return 
         except KeyError:
             # No listener thread exists for this topic at all, so all done:
             return

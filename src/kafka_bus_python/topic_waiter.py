@@ -45,6 +45,12 @@ class TopicWaiter(threading.Thread):
         # when a message arrives:
         self.eventToSet = eventObj
         
+        self.kafkaConsumer = SimpleConsumer(self.busModule.kafkaClient, 
+                                            group=None, 
+                                            topic=self.topicName, 
+                                            iter_timeout=None,    # wait forever
+                                            ) #****auto_commit=False)  
+         
         # Use the recommended way of stopping a thread:
         # Set a variable that the thread checks periodically:
         self.done = False
@@ -99,15 +105,17 @@ class TopicWaiter(threading.Thread):
         thread should stop.
         '''
         
-        # Consumer prints out all events logged by any producer. Times out in 3 minutes.
         while not self.done:
             
             # Hang for a msg to arrive:
-            topicMsgs = SimpleConsumer(self.busModule.kafkaClient, 
-                                       group=None, 
-                                       topic=self.topicName, 
-                                       iter_timeout=180, 
-                                       auto_commit=False)
+#             topicMsgs = SimpleConsumer(self.busModule.kafkaClient, 
+#                                        group=None, 
+#                                        topic=self.topicName, 
+#                                        iter_timeout=None,    # wait forever
+#                                        ) #****auto_commit=False)  
+
+            topicMsgs = self.kafkaConsumer.__iter__()
+
             # *****Can currently throw:
             #   FailedPayloadsError: [FetchRequest(topic='test', partition=0, offset=41, max_bytes=4096)]
             #   No handlers could be found for logger "kafka"
