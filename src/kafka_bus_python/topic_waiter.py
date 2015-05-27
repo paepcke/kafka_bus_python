@@ -45,6 +45,11 @@ class TopicWaiter(threading.Thread):
         # when a message arrives:
         self.eventToSet = eventObj
         
+        # Make sure the topic exists in the Kafka server.
+        # If it did not exist before, the following call
+        # will create it:
+        self.busModule.kafkaClient.ensure_topic_exists(self.topicName)
+        
         self.kafkaConsumer = SimpleConsumer(self.busModule.kafkaClient, 
                                             group=None, 
                                             topic=self.topicName, 
