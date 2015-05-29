@@ -5,7 +5,7 @@ Created on May 19, 2015
 '''
 import threading
 
-from kafka import SimpleConsumer
+from kafka.consumer import SimpleConsumer
 
 
 class TopicWaiter(threading.Thread):
@@ -114,8 +114,6 @@ class TopicWaiter(threading.Thread):
 #                                        iter_timeout=None,    # wait forever
 #                                        ) #****auto_commit=False)  
 
-            topicMsgs = self.kafkaConsumer.__iter__()
-
             # *****Can currently throw:
             #   FailedPayloadsError: [FetchRequest(topic='test', partition=0, offset=41, max_bytes=4096)]
             #   No handlers could be found for logger "kafka"
@@ -123,7 +121,7 @@ class TopicWaiter(threading.Thread):
 
             # We get an array of OffsetAndMessage objects from
             # the SimpleConsumer() call:
-            for offsetAndMessageObj in topicMsgs:
+            for offsetAndMessageObj in self.kafkaConsumer:
                 msgContent = offsetAndMessageObj.message.value.decode('UTF-8')
                 msgOffset  = offsetAndMessageObj.offset
                 

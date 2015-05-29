@@ -6,7 +6,10 @@ Created on May 22, 2015
 @author: paepcke
 '''
 
+import kafka
+
 from kafka_bus import BusAdapter
+
 
 class BusModuleProducer(object):
     '''
@@ -31,7 +34,17 @@ class BusModuleProducer(object):
             if msgText == 'Q':
                 break
             else:
-                bus.publish(msgText, 'example_use')
-
+                #*********
+                # bus.publish(msgText, 'example_use')
+                try:
+                    bus.publish(msgText, 'example_use')
+                except kafka.common.FailedPayloadsError as e:
+                    print("Got payload error, retrying... (%s)" % `e`)
+                    try:
+                        bus.publish(msgText, 'example_use')
+                    except kafka.common.FailedPayloadsError as e:
+                        print("Got payload error again (%s)" % `e`)
+                        continue
+                #*********
 if __name__ == '__main__':
     BusModuleProducer()        

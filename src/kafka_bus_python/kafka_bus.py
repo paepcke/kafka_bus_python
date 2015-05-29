@@ -6,10 +6,12 @@ Created on May 19, 2015
 
 from functools import partial
 import functools
+import logging
 import threading
 import types
 
-from kafka import SimpleProducer, KafkaClient
+from kafka.client import KafkaClient
+from kafka.producer.simple import SimpleProducer
 from kafka.common import KafkaTimeoutError
 
 from kafka_bus_python.topic_waiter import TopicWaiter
@@ -21,8 +23,17 @@ class BusAdapter(object):
     
     '''
     DEFAULT_KAFKA_LISTEN_PORT = 9092
+    
+    # Remember whether logging has been initialized (class var!):
+    loggingInitialized = False
+    logger = None
 
-    def __init__(self, kafkaHost='localhost', kafkaPort=None):
+    def __init__(self, 
+                 kafkaHost='localhost', 
+                 kafkaPort=None,
+                 loggingLevel=logging.INFO,
+                 logFile=None,
+                 ):
         '''
         Initialize communications with Kafka.
 
@@ -36,6 +47,8 @@ class BusAdapter(object):
         if kafkaPort is None:
             kafkaPort = BusAdapter.DEFAULT_KAFKA_LISTEN_PORT
         self.port = kafkaPort
+        
+        self.setupLogging(loggingLevel, logFile)
 
         self.kafkaClient = KafkaClient("%s:%s" % (kafkaHost,kafkaPort))
         self.producer    = SimpleProducer(self.kafkaClient)
@@ -323,3 +336,46 @@ class BusAdapter(object):
         self.topicEvents.clear()
         
         self.kafkaClient.close()
+
+    def setupLogging(self, loggingLevel, logFile):
+        if BusAdapter.loggingInitialized:
+            # Remove previous file or console handlers,
+            # else we get logging output doubled:
+            BusAdapter.logger.handlers = []
+            
+        # Set up logging:
+        BusAdapter.logger = logging.getLogger('jsonToRel')
+        BusAdapter.logger.setLevel(loggingLevel)
+        # Create file handler if requested:
+        if logFile is not None:
+            handler = logging.FileHandler(logFile)
+        else:
+            # Create console handler:
+            handler = logging.StreamHandler()
+        handler.setLevel(loggingLevel)
+#         # create formatter and add it to the handlers
+#         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#         fh.setFormatter(formatter)
+#         ch.setFormatter(formatter)
+        # Add the handler to the logger
+        BusAdapter.logger.addHandler(handler)
+        #**********************
+        #BusAdapter.logger.info("Info for you")
+        #BusAdapter.logger.warn("Warning for you")
+        #BusAdapter.logger.debug("Debug for you")
+        #**********************
+        
+        BusAdapter.loggingInitialized = True
+
+
+    def logWarn(self, msg):
+        BusAdapter.logger.warn(msg)
+
+    def logInfo(self, msg):
+        BusAdapter.logger.info(msg)
+     
+    def logError(self, msg):
+        BusAdapter.logger.error(msg)
+
+    def logDebug(self, msg):
+        BusAdapter.logger.debug(msg)
