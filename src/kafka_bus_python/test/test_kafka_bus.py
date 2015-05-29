@@ -11,7 +11,7 @@ import unittest
 from kafka_bus_python.kafka_bus import BusAdapter
 
 
-TEST_ALL = True
+TEST_ALL = False
 
 class TestKafkaBus(unittest.TestCase):
 
@@ -57,7 +57,7 @@ class TestKafkaBus(unittest.TestCase):
         self.bus.unsubscribeFromTopic('test')
         self.assertEqual(len(self.bus.listenerThreads), 0)
         
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testWaitForMessage(self):
         
         self.bus.subscribeToTopic('test', deliveryCallback=self.deliveryFunc)
@@ -291,7 +291,7 @@ class TestProducer(threading.Thread):
         
         while not self.done:
 
-            if self.waitForTrigger is not None:
+            if self.waitForTrigger:
                 self.triggerEvent.wait()
                 self.triggerEvent.clear()
             
