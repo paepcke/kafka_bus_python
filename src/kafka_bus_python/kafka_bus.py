@@ -11,8 +11,8 @@ import threading
 import types
 
 from kafka.client import KafkaClient
+from kafka.common import KafkaTimeoutError, KafkaUnavailableError
 from kafka.producer.simple import SimpleProducer
-from kafka.common import KafkaTimeoutError
 
 from kafka_bus_python.topic_waiter import TopicWaiter
 
@@ -23,34 +23,61 @@ class BusAdapter(object):
     
     '''
     DEFAULT_KAFKA_LISTEN_PORT = 9092
-    
+    KAFKA_SERVERS = [('mono.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
+                     ('datastage.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
+                     ]
+       
     # Remember whether logging has been initialized (class var!):
     loggingInitialized = False
     logger = None
 
     def __init__(self, 
-                 kafkaHost='localhost', 
+                 kafkaHost=None, 
                  kafkaPort=None,
-                 loggingLevel=logging.INFO,
+                 loggingLevel=logging.DEBUG,
                  logFile=None,
+                 kafkaGroupId='school_bus'
                  ):
         '''
         Initialize communications with Kafka.
 
-        :param kafkaHost: hostname or ip address of host where Kafka and Zookeeper hosts run
-        :type kafkaHost: string
-        :param kafkaPort: port at which Kafka expects clients to come in
-        :type kafkaPort: int
+        :param kafkaHost: hostname or ip address of host where Kafka server runs.
+            If None, then BusAdapter.KAFKA_SERVERS are tried in turn.
+        :type kafkaHost: {string | None}
+        :param kafkaPort: port at which Kafka expects clients to come in.
+            if None, then BusAdapter.DEFAULT_KAFKA_LISTEN_PORT is used.
+        :type kafkaPort: {int | None}
+        :param loggingLevel: detail of logging
+        :type loggingLevel: {logging.DEBUG | logging.INFO | logging.ERROR}  
+        :param logFile: file to which log is written; concole, if NONE
+        :type logFile: {string | None}
+        :param kafkaGroupId: name under which message offset management is
+            stored [by Kafka in zookeeper]. Different groups of bus modules
+            will have different sets of message offsets recorded. You can 
+            leave this default.
+        :type kafkaGroupId: string
         '''
 
-        self.host = kafkaHost
         if kafkaPort is None:
             kafkaPort = BusAdapter.DEFAULT_KAFKA_LISTEN_PORT
         self.port = kafkaPort
+        self.kafkaGroupId = kafkaGroupId
         
         self.setupLogging(loggingLevel, logFile)
 
-        self.kafkaClient = KafkaClient("%s:%s" % (kafkaHost,kafkaPort))
+        try:
+            for hostPortTuple in BusAdapter.KAFKA_SERVERS:
+                self.logDebug('Contacting Kafka server at %s:%s...' % hostPortTuple)
+                self.kafkaClient = KafkaClient("%s:%s" % hostPortTuple)
+                self.logDebug('Successfully contacted Kafka server at %s:%s...' % hostPortTuple)
+                # If succeeded, init the 'bootstrap_servers' array
+                # referenced in topic_waiter.py:
+                self.bootstrapServers = ['%s:%s' % hostPortTuple]
+                # Don't try any other servers:
+                break
+        except KafkaUnavailableError:
+            raise KafkaUnavailableError("No Kafka server found running at any of %s." % str(BusAdapter.KAFKA_SERVERS))
+                
         self.producer    = SimpleProducer(self.kafkaClient)
 
         # Create a function that has the first method-arg
@@ -168,7 +195,7 @@ class BusAdapter(object):
             self.topicEvents[topicName] = event
             
             # Create the thread that will listen to Kafka:
-            waitThread = TopicWaiter(topicName, self, deliveryCallback, event)
+            waitThread = TopicWaiter(topicName, self, self.kafkaGroupId, deliveryCallback=deliveryCallback, eventObj=event)
             # Remember that this thread listens to the given topic:
             self.listenerThreads[topicName] = waitThread
             
@@ -344,14 +371,23 @@ class BusAdapter(object):
             BusAdapter.logger.handlers = []
             
         # Set up logging:
-        BusAdapter.logger = logging.getLogger('jsonToRel')
+        # A logger named SchoolBusLog:
+        BusAdapter.logger = logging.getLogger('SchoolBusLog')
         BusAdapter.logger.setLevel(loggingLevel)
+        
+        # A msg formatter that shows datetime, logger name, 
+        # the log level of the message, and the msg.
+        # The datefmt=None causes ISO8601 to be used:
+        
+        formatter = logging.Formatter(fmt='%(asctime)s-%(name)s-%(levelname)s: %(message)s',datefmt=None)
+        
         # Create file handler if requested:
         if logFile is not None:
             handler = logging.FileHandler(logFile)
         else:
             # Create console handler:
             handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
         handler.setLevel(loggingLevel)
 #         # create formatter and add it to the handlers
 #         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

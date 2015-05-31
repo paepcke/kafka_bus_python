@@ -6,6 +6,7 @@ Created on May 19, 2015
 import threading
 
 from kafka.consumer import SimpleConsumer
+from kafka.consumer.kafka import KafkaConsumer
 
 
 class TopicWaiter(threading.Thread):
@@ -13,15 +14,28 @@ class TopicWaiter(threading.Thread):
     classdocs
     '''
 
-    def __init__(self, topicName, busAdapter, deliveryCallback=None, eventObj=None):
+    # Max size of an incoming msg: 1MB
+    fetch_message_max_bytes = 1024 * 1024 *1024
+
+    def __init__(self, topicName, busAdapter, kafkaGroupId, deliveryCallback=None, eventObj=None):
         '''
         Initialize list of callback functions. Remember the Event object
         to raise whenever a message arrives.
+        
+        Assumption: the passed-in parent BusAdapter object contains
+        instance variable bootstrapServers, which is initialized to
+        an array of strings of the form hostName:port, in which each
+        hostName is a Kafka server, and each port is a port on which
+        the Kafka server listens. Example: ['myKafkaServer.myplace.org:9092']. 
         
         :param topicName: Kafka topic to listen to
         :type topicName: string
         :param busAdapter: BusAdapter object that created this thread.
         :type busAdapter: BusAdapter
+        :param kafkaGroupId: name under which message offset management is
+            stored [by Kafka in zookeeper]. Different groups of bus modules
+            will have different sets of message offsets recorded.
+        :type kafkaGroupId: string
         :param deliveryCallback: a function to call when a message on this topic arrives.
             See :func:`addTopicListener` in :class:`BusAdapter`.
         :type deliveryCallback: Function
@@ -33,6 +47,7 @@ class TopicWaiter(threading.Thread):
         threading.Thread.__init__(self)
         self.topicName = topicName
         self.busModule = busAdapter
+        self.kafkaGroupId = kafkaGroupId
         
         # We maintain an array of functions to call
         # when an event arrives:
@@ -50,12 +65,18 @@ class TopicWaiter(threading.Thread):
         # will create it:
         self.busModule.kafkaClient.ensure_topic_exists(self.topicName)
         
-        self.kafkaConsumer = SimpleConsumer(self.busModule.kafkaClient, 
-                                            group=None, 
-                                            topic=self.topicName, 
-                                            iter_timeout=None,    # wait forever
-                                            ) #****auto_commit=False)  
+#         self.kafkaConsumer = SimpleConsumer(self.busModule.kafkaClient, 
+#                                             group=self.kafkaGroupId, 
+#                                             topic=self.topicName, 
+#                                             iter_timeout=None,    # wait forever
+#                                             ) #****auto_commit=False)  
          
+        self.kafkaConsumer = KafkaConsumer(self.topicName,
+                                           group_id=self.kafkaGroupId,
+                                           auto_commit_enable=True,
+                                           auto_offset_reset='smallest',
+                                           bootstrap_servers=self.busModule.bootstrapServers)
+        
         # Use the recommended way of stopping a thread:
         # Set a variable that the thread checks periodically:
         self.done = False
@@ -113,26 +134,33 @@ class TopicWaiter(threading.Thread):
         while not self.done:
             
             # Hang for a msg to arrive:
-#             topicMsgs = SimpleConsumer(self.busModule.kafkaClient, 
-#                                        group=None, 
-#                                        topic=self.topicName, 
-#                                        iter_timeout=None,    # wait forever
-#                                        ) #****auto_commit=False)  
-
+            
             # *****Can currently throw:
             #   FailedPayloadsError: [FetchRequest(topic='test', partition=0, offset=41, max_bytes=4096)]
             #   No handlers could be found for logger "kafka"
             # Need to figure out why.
 
-            # We get an array of OffsetAndMessage objects from
+            # We get an iterator feeding out KafkaMessage
+            # objects:  KafkaMessage(topic='learner_homework_history', 
+            #                        partition=0, 
+            #                        offset=0, 
+            #                        key=None, 
+            #                        value='My message body')
+
             # the SimpleConsumer() call:
-            for offsetAndMessageObj in self.kafkaConsumer:
-                msgContent = offsetAndMessageObj.message.value.decode('UTF-8')
-                msgOffset  = offsetAndMessageObj.offset
+            for kafkaMessage in self.kafkaConsumer:
+                msgContent = kafkaMessage.value.decode('UTF-8')
+                msgOffset  = kafkaMessage.offset
                 
                 # Deliver the message to all registered callbacks:
                 for deliveryFunc in self.deliveryCallbacks:
                     deliveryFunc(self.topicName, msgContent, msgOffset)
+                    
+                    # Delivered msg to all the delivery funcs.
+                    # Tell Kafka that we are done with this msg:
+                    self.kafkaConsumer.task_done(kafkaMessage)
+                    self.kafkaConsumer.commit()
+                    
                     # Was the stop() method called?
                     if self.done:
                         break
