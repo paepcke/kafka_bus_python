@@ -5,7 +5,6 @@ Created on May 19, 2015
 '''
 import threading
 
-from kafka.consumer import SimpleConsumer
 from kafka.consumer.kafka import KafkaConsumer
 
 
@@ -75,6 +74,7 @@ class TopicWaiter(threading.Thread):
                                            group_id=self.kafkaGroupId,
                                            auto_commit_enable=True,
                                            auto_offset_reset='smallest',
+                                           fetch_message_max_bytes=1024*1024*1024,
                                            bootstrap_servers=self.busModule.bootstrapServers)
         
         # Use the recommended way of stopping a thread:

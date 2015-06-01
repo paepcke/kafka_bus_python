@@ -4,16 +4,20 @@ Created on May 19, 2015
 @author: paepcke
 '''
 
+from datetime import datetime
 from functools import partial
 import functools
+import json
 import logging
 import threading
 import types
+import uuid
 
 from kafka.client import KafkaClient
 from kafka.common import KafkaTimeoutError, KafkaUnavailableError
 from kafka.producer.simple import SimpleProducer
 
+from kafka_bus_python.kafka_bus_utils import JSONEncoderBusExtended
 from kafka_bus_python.topic_waiter import TopicWaiter
 
 
@@ -21,9 +25,16 @@ class BusAdapter(object):
     '''
     The BusAdapter class is intended to be imported to bus modules.
     
+    'id'     : <RFC 4122 UUID Version 4>   # e.g. 'b0f4259e-3d01-44bd-9eb3-25981c2dc643'
+    'type'   : {req | resp}
+    'status' : { OK | ERROR }
+    'time'   : <ISO 8601>                  # e.g. '2015-05-31T17:13:41.957350'
+    'content': <text>
+    
     '''
     DEFAULT_KAFKA_LISTEN_PORT = 9092
-    KAFKA_SERVERS = [('mono.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
+    KAFKA_SERVERS = [('localhost', DEFAULT_KAFKA_LISTEN_PORT),
+                     ('mono.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
                      ('datastage.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
                      ]
        
@@ -103,8 +114,15 @@ class BusAdapter(object):
         # communication between the topic's thread and the main
         # thread. Used in awaitMessage():
         self.topicEvents = {}
+        
+        # Dict used for synchronous calls: the dict maps
+        # msg UUIDs to the results of a call. Set in 
+        # deliverResultUuidFilter(), and emptied in publish()
+        self.resDict = {}
+
+# --------------------------  Pulic Methods ---------------------
      
-    def publish(self, busMessage, topicName=None, auth=None):
+    def publish(self, busMessage, topicName=None, sync=False, timeout=None, auth=None):
         '''
         Publish either a string or a BusMessage object. If busMessage
         is a string, then the caller is responsible for ensuring that
@@ -120,6 +138,12 @@ class BusAdapter(object):
             parameter must be a BusMessage object that contains an
             associated topic name.
         :type topicName: {string | None}
+        :param sync: if True, call will not return till answer received,
+            or timeout (if given) has expired).
+        :type sync: boolean
+        :param timeout: timeout after which synchronous call should time out.
+            if sync is False, the timeout parameter is ignored.
+        :type timeout: float
         :param auth: reserved for later authentication mechanism.
         :type auth: not yet known
         '''
@@ -142,13 +166,30 @@ class BusAdapter(object):
                     raise ValueError('Attempt to publish a BusMessage instance that does not hold a topic name: %s' % str(busMessage))
             # Get the serialized, UTF-8 encoded message from the BusMessage:
             msg = busMessage.content()
-        
+            
+        # Now msg contains the msg text.
         try:
             self.kafkaClient.ensure_topic_exists(topicName, timeout=5)
         except KafkaTimeoutError:
             raise("Topic %s is not a recognized topic." % topicName)
         
-        self.producer.send_messages(topicName, msg)
+        # Create a JSON struct:
+        msgUUID = str(uuid.uuid4())
+        msgDict = dict(zip(['id', 'type', 'time', 'content'],
+                           [msgUUID, 'req', datetime.now().isoformat(), msg]))
+
+        self.producer.send_messages(topicName, json.dump(msgDict))
+        
+        # If synchronous operation requested, wait for response:
+        if sync:
+            self.uuidToWaitFor = msgUUID
+            #*****: - save delivery func for this topic, if it's being
+            #         subscribed to
+            #       - Make delivery func for this topic subscription be self.deliverRsultUuidFilter (partial func)
+            #       - wait for topic
+            #       - unsubscribe, or reset subscription to original delivery func
+            #       - get self.resDict[msgUUID], and del that entry in self.resDict
+            #       - return the result Dict. 
 
     def subscribeToTopic(self, topicName, deliveryCallback=None):
         '''
@@ -313,6 +354,50 @@ class BusAdapter(object):
             return
 
 
+    def waitForMessage(self, topicName, timeout=None):
+        '''
+        Block till a message on the given topic arrives. It is
+        an error to call this method on a topic to which the
+        caller has not previously subscribed.
+        
+        :param topicName:
+        :type topicName:
+        :param timeout: seconds (or fractions of second) to wait.
+        :type timeout: float
+        :returns True if a message arrived in time, else returnes False
+        :rtype boolean
+        :raise NameError on attempt to wait for a topic for which no subscription exists.
+        '''
+        
+        try:
+            event = self.topicEvents[topicName]
+            return(event.wait(timeout))
+        except KeyError:
+            raise NameError("Attempt to wait for messages on topic %s, which was never subscribed to." % topicName)
+        
+    def returnError(self, req_key, topicName, errMsg):
+        errMsg = {'resp_key'    : req_key,
+                  'status'      : 'ERROR',
+                  'content'     : errMsg
+                 }
+        errMsgJSON = JSONEncoderBusExtended.makeJSON(errMsg)
+        self.bus.publish(errMsgJSON, topicName)
+      
+    def close(self):
+        '''
+        Cleanup. All threads are stopped. Kafka
+        connection is closed.
+        '''
+        for thread in self.listenerThreads.values():
+            thread.stop()
+        self.listenerThreads.clear()
+        self.topicEvents.clear()
+        
+        self.kafkaClient.close()
+
+# --------------------------  Private Methods ---------------------
+
+
     def deliverResult(self, topicName, rawResult, msgOffset):
         '''
         Simple default message delivery callback. Just prints 
@@ -332,38 +417,23 @@ class BusAdapter(object):
         '''
         print('Msg at offset %d: %s' % (msgOffset,rawResult))
         
-        
-    def waitForMessage(self, topicName, timeout=None):
-        '''
-        Block till a message on the given topic arrives. It is
-        an error to call this method on a topic to which the
-        caller has not previously subscribed.
-        
-        :param topicName:
-        :type topicName:
-        :param timeout:
-        :type timeout:
-        :raise NameError on attempt to wait for a topic for which no subscription exists.
-        '''
-        
-        try:
-            event = self.topicEvents[topicName]
-            event.wait()
-        except KeyError:
-            raise NameError("Attempt to wait for messages on topic %s, which was never subscribed to." % topicName)
-        
-    def close(self):
-        '''
-        Cleanup. All threads are stopped. Kafka
-        connection is closed.
-        '''
-        for thread in self.listenerThreads.values():
-            thread.stop()
-        self.listenerThreads.clear()
-        self.topicEvents.clear()
-        
-        self.kafkaClient.close()
 
+    def deliverResultUuidFilter(self, topicName, rawResult, msgOffset):
+        if self.uuidToWaitFor is not None:
+            try:
+                thisResDict = json.loads(rawResult)
+            except ValueError e:
+                # Bad JSON found; log and ignore:
+                self.logWarn('Bad JSON while waiting for sync response: %s' rawResult)
+                return
+            # Is this a response msg, and is it the one
+            # we are waiting for?
+            thisUuid    = thisResDict.get('id', None)
+            thisMsgType = thisResDict.get('type', None)
+            if thisUuid    == self.uuidToWaitFor and \
+               thisMsgType == 'resp':
+                self.resDict['uuidToWaitFor'] = thisResDict
+    
     def setupLogging(self, loggingLevel, logFile):
         if BusAdapter.loggingInitialized:
             # Remove previous file or console handlers,
@@ -415,3 +485,4 @@ class BusAdapter(object):
 
     def logDebug(self, msg):
         BusAdapter.logger.debug(msg)
+
