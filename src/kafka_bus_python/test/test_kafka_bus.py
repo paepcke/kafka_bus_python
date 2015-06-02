@@ -4,6 +4,7 @@ Created on May 20, 2015
 @author: paepcke
 '''
 import functools
+import logging
 import threading
 import time
 import unittest
@@ -11,19 +12,26 @@ import unittest
 from kafka_bus_python.kafka_bus import BusAdapter
 
 
-TEST_ALL = False
+TEST_ALL = True
 
 class TestKafkaBus(unittest.TestCase):
 
     
     def setUp(self):
         self.bus = BusAdapter()
+        
+        #Elog = logging.getLogger("kafka")
+        #log.setLevel(logging.DEBUG)
+        
         self.deliveryFunc     = functools.partial(self.deliverMessage)
         self.altDeliveryFunc  = functools.partial(self.altDeliverMessage)
         self.deliveryEvent    = threading.Event()
         self.altDeliveryEvent = threading.Event()
         
+        self.testTopic = 'test1'
+        
     def tearDown(self):
+        self.bus.unsubscribeFromTopic(self.testTopic)
         try:
             # If a test producer was running, stop it:
             self.testProducer.stop()
@@ -39,11 +47,11 @@ class TestKafkaBus(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testSubscription(self):
 
-        self.bus.subscribeToTopic('test')
+        self.bus.subscribeToTopic(self.testTopic)
 
         # Check that BusAdapter has properly remembered
         # the thread that resulted from above subscription:
-        self.assertEqual(self.bus.listenerThreads['test'].listeners(), [self.bus.resultCallback])
+        self.assertEqual(self.bus.listenerThreads[self.testTopic].listeners(), [self.bus.resultCallback])
         
         # One topic event:
         self.assertEqual(len(self.bus.topicEvents), 1)
@@ -51,20 +59,20 @@ class TestKafkaBus(unittest.TestCase):
         # Unsubscribing a topic that we didn't subscribe
         # to should be harmless:
         self.bus.unsubscribeFromTopic('badTopic')
-        self.assertEqual(self.bus.listenerThreads['test'].listeners(), [self.bus.resultCallback])
+        self.assertEqual(self.bus.listenerThreads[self.testTopic].listeners(), [self.bus.resultCallback])
         
         # Seriously unsubscribe:
-        self.bus.unsubscribeFromTopic('test')
+        self.bus.unsubscribeFromTopic(self.testTopic)
         self.assertEqual(len(self.bus.listenerThreads), 0)
         
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testWaitForMessage(self):
         
-        self.bus.subscribeToTopic('test', deliveryCallback=self.deliveryFunc)
+        self.bus.subscribeToTopic(self.testTopic, deliveryCallback=self.deliveryFunc, kafkaLiveCheckTimeout=5)
 
         # Create a producer that immediately sends a single message
-        # to topic 'test', and then goes away:
-        self.testProducer = TestProducer('test')
+        # to topic self.testTopic, and then goes away:
+        self.testProducer = TestProducer(self.testTopic)
         
         # Make sure msg is received:
         self.assertTrue(self.awaitExpectedMsg())
@@ -73,11 +81,11 @@ class TestKafkaBus(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testUnsubscribe(self):
         
-        self.bus.subscribeToTopic('test', deliveryCallback=self.deliveryFunc)
+        self.bus.subscribeToTopic(self.testTopic, deliveryCallback=self.deliveryFunc)
         
         # Ask test producer to fire a msg each time 
         # we call setTrigger():
-        self.testProducer = TestProducer('test', waitForTrigger=True, delayBetweenMessages=0)
+        self.testProducer = TestProducer(self.testTopic, waitForTrigger=True, delayBetweenMessages=0)
         
         # Fire first msg:
         self.testProducer.setTrigger()
@@ -92,7 +100,7 @@ class TestKafkaBus(unittest.TestCase):
         self.assertMsgContentReasonable()
                 
         # Unsubscribe:
-        self.bus.unsubscribeFromTopic('test')
+        self.bus.unsubscribeFromTopic(self.testTopic)
         
         # Fire third msg:
         self.testProducer.setTrigger()
@@ -104,11 +112,11 @@ class TestKafkaBus(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testRemoveListener(self):
         
-        self.bus.subscribeToTopic('test', deliveryCallback=self.deliveryFunc)
+        self.bus.subscribeToTopic(self.testTopic, deliveryCallback=self.deliveryFunc)
         
         # Ask test producer to fire a msg each time 
         # we call setTrigger():
-        self.testProducer = TestProducer('test', waitForTrigger=True, delayBetweenMessages=0)
+        self.testProducer = TestProducer(self.testTopic, waitForTrigger=True, delayBetweenMessages=0)
         
         # Fire first msg:
         self.testProducer.setTrigger()
@@ -116,7 +124,7 @@ class TestKafkaBus(unittest.TestCase):
         self.assertTrue(self.awaitExpectedMsg())
         self.assertMsgContentReasonable()
         
-        self.bus.removeTopicListener('test', self.deliveryFunc)
+        self.bus.removeTopicListener(self.testTopic, self.deliveryFunc)
         
         # Make sure second msg is NOT received:
         self.topicName = None
@@ -138,7 +146,7 @@ class TestKafkaBus(unittest.TestCase):
         self.assertIsNone(self.msgOffset)
         
         # Re-install the test listener:
-        self.bus.addTopicListener('test', deliveryCallback=self.deliveryFunc)
+        self.bus.addTopicListener(self.testTopic, deliveryCallback=self.deliveryFunc)
         
         # Ensure msg arrives:
         self.deliveryEvent.clear()
@@ -159,14 +167,14 @@ class TestKafkaBus(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testTwoListeners(self):
         
-        self.bus.subscribeToTopic('test', deliveryCallback=self.deliveryFunc)
+        self.bus.subscribeToTopic(self.testTopic, deliveryCallback=self.deliveryFunc)
         
         # Ask test producer to fire a msg each time 
         # we call setTrigger():
-        self.testProducer = TestProducer('test', waitForTrigger=True, delayBetweenMessages=0)
+        self.testProducer = TestProducer(self.testTopic, waitForTrigger=True, delayBetweenMessages=0)
     
         # Install a second test listener:
-        self.bus.addTopicListener('test', deliveryCallback=self.altDeliveryFunc)
+        self.bus.addTopicListener(self.testTopic, deliveryCallback=self.altDeliveryFunc)
         
         # Reset both listener functions' events:
         self.deliveryEvent.clear()
@@ -182,7 +190,18 @@ class TestKafkaBus(unittest.TestCase):
         self.assertTrue(self.deliveryEvent.isSet())
         self.assertTrue(self.altDeliveryEvent.isSet())
 
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testSynchronousCall(self):
 
+        # Create a producer that immediately sends a single message
+        # to topic self.testTopic, and then goes away:
+        self.testProducer = TestProducer(self.testTopic)
+        
+        #*****self.bus.
+        
+        # Make sure msg is received:
+        self.assertTrue(self.awaitExpectedMsg())
+        self.assertMsgContentReasonable()        
     #--------------------------------------------  Support Methods ------------------------
 
         
@@ -203,7 +222,7 @@ class TestKafkaBus(unittest.TestCase):
         # should be there:
         timeBeforeWait = time.time()
         
-        self.bus.waitForMessage('test', '5')
+        self.bus.waitForMessage(self.testTopic, 5)
         
         timeAfterWait  = time.time()
         
@@ -214,13 +233,17 @@ class TestKafkaBus(unittest.TestCase):
     def assertMsgContentReasonable(self):
         '''
         Checks that a recently received msg has
-        topic 'test', that the payload starts with msg_,
+        topic self.testTopic, that the payload starts with msg_,
         and that offset info is an int.
         '''
 
         # Make sure msg has reasonable content:        
-        self.assertEqual(self.topicName, 'test')
-        self.assertTrue(self.rawResult.startswith('msg_'))
+        self.assertEqual(self.topicName, self.testTopic)
+        resDict = eval(self.rawResult)
+        self.assertTrue('content' in resDict.keys())
+        self.assertTrue('time' in resDict.keys())
+        self.assertTrue('type' in resDict.keys())
+        self.assertTrue('id' in resDict.keys())
         self.assertTrue(type(self.msgOffset) == int)
         
         
@@ -279,6 +302,9 @@ class TestProducer(threading.Thread):
         
         self.start()
     
+    def mostRecentMsgNum(self):
+        return(self.msgNumber)
+    
     def setTrigger(self):
         self.triggerEvent.set()
         
@@ -300,7 +326,7 @@ class TestProducer(threading.Thread):
                 return
             
             self.msgNumber += 1
-            bus.publish('msg_%d' % self.msgNumber, 'test')
+            bus.publish('msg_%d' % self.msgNumber, self.topicName)
             
             if self.delayBetweenMessages is not None:
                 time.sleep(self.delayBetweenMessages)

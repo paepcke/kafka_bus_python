@@ -17,6 +17,8 @@ from kafka.client import KafkaClient
 from kafka.common import KafkaTimeoutError, KafkaUnavailableError
 from kafka.producer.simple import SimpleProducer
 
+from kafka_bus_python.kafka_bus_exceptions import SyncCallTimedOut, \
+    SyncCallRuntimeError, BadInformation
 from kafka_bus_python.kafka_bus_utils import JSONEncoderBusExtended
 from kafka_bus_python.topic_waiter import TopicWaiter
 
@@ -32,11 +34,21 @@ class BusAdapter(object):
     'content': <text>
     
     '''
+    
+    LEGAL_MSG_TYPES = ['req', 'resp']
+    LEGAL_STATUS    = ['OK', 'ERROR']
+    
     DEFAULT_KAFKA_LISTEN_PORT = 9092
     KAFKA_SERVERS = [('localhost', DEFAULT_KAFKA_LISTEN_PORT),
                      ('mono.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
                      ('datastage.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
                      ]
+
+#     KAFKA_SERVERS = [('mono.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
+#                      ('localhost', DEFAULT_KAFKA_LISTEN_PORT),
+#                      ('datastage.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
+#                      ]
+
        
     # Remember whether logging has been initialized (class var!):
     loggingInitialized = False
@@ -103,7 +115,11 @@ class BusAdapter(object):
         # a *function* which only takes the non-self parameters 
         # specified in method :func:`addTopicListener`. 
         
-        self.resultCallback = partial(self.deliverResult)
+        self.resultCallback    = partial(self.deliverResult)
+        
+        # A function that will be called when the result to
+        # a synchronous call arrives:
+        self.syncResultWaiter  = partial(self.awaitSynchronousReturn)
         
         # Dict mapping topic names to thread objects that listen
         # to the respective topic. Used by subscribeToTopic() and
@@ -117,12 +133,12 @@ class BusAdapter(object):
         
         # Dict used for synchronous calls: the dict maps
         # msg UUIDs to the results of a call. Set in 
-        # deliverResultUuidFilter(), and emptied in publish()
+        # awaitSynchronousReturn(), and emptied in publish()
         self.resDict = {}
 
 # --------------------------  Pulic Methods ---------------------
      
-    def publish(self, busMessage, topicName=None, sync=False, timeout=None, auth=None):
+    def publish(self, busMessage, topicName=None, sync=False, msgId=None, msgType='req', timeout=None, auth=None):
         '''
         Publish either a string or a BusMessage object. If busMessage
         is a string, then the caller is responsible for ensuring that
@@ -141,6 +157,14 @@ class BusAdapter(object):
         :param sync: if True, call will not return till answer received,
             or timeout (if given) has expired).
         :type sync: boolean
+        :param msgId: if this publish() call is a response to a prior request,
+            the request message's ID must be the id of the response. In that
+            case the caller can use this parameter to provide the ID. If
+            None, a new message ID is generated.
+        :type msgId: string
+        :param msgType: value for the message type field of the outgoing message.
+            Usually this is 'req', but when calling publish() to return a result
+            to a prior request, then set this argument to 'resp'. 
         :param timeout: timeout after which synchronous call should time out.
             if sync is False, the timeout parameter is ignored.
         :type timeout: float
@@ -148,7 +172,7 @@ class BusAdapter(object):
         :type auth: not yet known
         '''
 
-        if type(busMessage) == types.StringType:
+        if type(busMessage) == types.StringType or type(busMessage) == types.UnicodeType: 
             # We were passed a raw string to send. The topic name
             # to publish to better be given:
             if topicName is None:
@@ -171,27 +195,106 @@ class BusAdapter(object):
         try:
             self.kafkaClient.ensure_topic_exists(topicName, timeout=5)
         except KafkaTimeoutError:
-            raise("Topic %s is not a recognized topic." % topicName)
+            raise BadInformation("Topic '%s' is not a recognized topic." % topicName)
         
         # Create a JSON struct:
-        msgUUID = str(uuid.uuid4())
-        msgDict = dict(zip(['id', 'type', 'time', 'content'],
-                           [msgUUID, 'req', datetime.now().isoformat(), msg]))
-
-        self.producer.send_messages(topicName, json.dump(msgDict))
+        if msgId is None:
+            msgUuid = str(uuid.uuid4())
+        else:
+            msgUuid = msgId
+        # Sanity check on message type:
+        if msgType not in BusAdapter.LEGAL_MSG_TYPES:
+            raise ValueError('Legal message types are %s' % str(BusAdapter.LEGAL_MSG_TYPES))
         
+        msgDict = dict(zip(['id', 'type', 'time', 'content'],
+                           [msgUuid, msgType, datetime.now().isoformat(), msg]))
+
         # If synchronous operation requested, wait for response:
         if sync:
-            self.uuidToWaitFor = msgUUID
-            #*****: - save delivery func for this topic, if it's being
-            #         subscribed to
-            #       - Make delivery func for this topic subscription be self.deliverRsultUuidFilter (partial func)
-            #       - wait for topic
-            #       - unsubscribe, or reset subscription to original delivery func
-            #       - get self.resDict[msgUUID], and del that entry in self.resDict
-            #       - return the result Dict. 
+            
+            # Before publishing the request, must prepare for 
+            # a function that will be invoked with the result.
+            
+            # Use instance vars for communication with the result 
+            # delivery thread.
+            # Use of these instance vars means that publish
+            # isn't re-entrant. Fine for now:
 
-    def subscribeToTopic(self, topicName, deliveryCallback=None):
+            # For the result delivery method to know which msg id
+            # we are waiting for:            
+            self.uuidToWaitFor   = msgUuid
+            
+            # For the result delivery method to know which topic
+            # we are waiting for:
+            self.topicToWaitFor  = topicName
+
+            # For the result delivery method to put a string
+            # if an error occurs while processing the result
+            # bus message:
+
+            self.syncResultError = None
+            
+            # Create event that will wake us when result
+            # arrived and has been placed in self.resDict:
+
+            self.resultArrivedEvent = threading.Event(timeout)
+
+            # If not subscribed to the topic to which this synchronous
+            # call is being published, then subscribe to it temporarily:
+
+            wasSubscribed = topicName in self.mySubscriptions()
+            if not wasSubscribed:
+                self.subscribeToTopic(topicName, self.syncResultWaiter)
+            else:
+                self.addTopicListener(topicName, self.syncResultWaiter)
+            
+            # Finally: post the request...
+            self.producer.send_messages(topicName, json.dumps(msgDict))
+            
+            # ... and wait for the answer message to invoke
+            # self.awaitSynchronousReturn():
+            timedOut = self.resultArrivedEvent.wait(timeout)
+            
+            # Result arrived, and was placed into
+            # self.resDict under the msgUuid. Remove the listener
+            # that waited for the result:
+            
+            self.removeTopicListener(topicName, self.syncResultWaiter)
+            
+            # If we weren't subscribed to this topic, then
+            # restore that condition:
+
+            if not wasSubscribed:
+                self.unsubscribeFromTopic(topicName)
+            
+            # If the 'call' timed out, raise exception:
+            if timedOut:
+                raise SyncCallTimedOut('Synchronous call on topic %s timed out' % topicName)
+            
+            # A result arrived from the call:
+            res = self.resDict.get(msgUuid, None)
+            
+            # No longer need the result to be saved:
+            try:
+                del self.resDict[msgUuid]
+            except KeyError:
+                pass
+            
+            # Check whether awaitSynchronousReturn() placed an
+            # error message into self.syncResultError:
+
+            if self.syncResultError is not None:
+                raise(SyncCallRuntimeError(self.syncResultError)) 
+            
+            return res
+        
+        else:
+            # Not a synchronous call; just publish the request:
+            self.producer.send_messages(topicName, json.dumps(msgDict))
+       
+
+
+    def subscribeToTopic(self, topicName, deliveryCallback=None, kafkaLiveCheckTimeout=30):
         '''
         Fork a new thread that keeps waiting for any messages
         on the topic of the given name. Stop listening for the topic
@@ -202,7 +305,7 @@ class BusAdapter(object):
         for details.
         
         If deliveryCallback is absent or None, then method deliverResult()
-        in this class will be used. That method is designed to be a 
+        in this class will be used. That method is intended to be a 
         placeholder with no side effects.
         
         It is a no-op to call this method multiple times for the
@@ -213,6 +316,10 @@ class BusAdapter(object):
         :param deliveryCallback: a function that takes two args: a topic
             name, and a topic content string.
         :type deliveryCallback: function
+        :param kafkaLiveCheckTimeout: timeout in (fractional) seconds to
+            wait when checking for a live Kafka server being available.
+        :type kafkaLiveCheckTimeout: float
+        :raise KafkaServerNotFound when no Kafka server responds
         '''
         
         if deliveryCallback is None:
@@ -235,8 +342,15 @@ class BusAdapter(object):
             event = threading.Event()
             self.topicEvents[topicName] = event
             
-            # Create the thread that will listen to Kafka:
-            waitThread = TopicWaiter(topicName, self, self.kafkaGroupId, deliveryCallback=deliveryCallback, eventObj=event)
+            # Create the thread that will listen to Kafka;
+            # raises KafkaServerNotFound if necessary:
+            waitThread = TopicWaiter(topicName, 
+                                     self, 
+                                     self.kafkaGroupId, 
+                                     deliveryCallback=deliveryCallback, 
+                                     eventObj=event,
+                                     kafkaLiveCheckTimeout=kafkaLiveCheckTimeout)
+
             # Remember that this thread listens to the given topic:
             self.listenerThreads[topicName] = waitThread
             
@@ -374,6 +488,9 @@ class BusAdapter(object):
             return(event.wait(timeout))
         except KeyError:
             raise NameError("Attempt to wait for messages on topic %s, which was never subscribed to." % topicName)
+ 
+    def mySubscriptions(self):
+        return self.topicEvents.keys()
         
     def returnError(self, req_key, topicName, errMsg):
         errMsg = {'resp_key'    : req_key,
@@ -418,21 +535,61 @@ class BusAdapter(object):
         print('Msg at offset %d: %s' % (msgOffset,rawResult))
         
 
-    def deliverResultUuidFilter(self, topicName, rawResult, msgOffset):
-        if self.uuidToWaitFor is not None:
-            try:
-                thisResDict = json.loads(rawResult)
-            except ValueError e:
-                # Bad JSON found; log and ignore:
-                self.logWarn('Bad JSON while waiting for sync response: %s' rawResult)
-                return
-            # Is this a response msg, and is it the one
-            # we are waiting for?
-            thisUuid    = thisResDict.get('id', None)
-            thisMsgType = thisResDict.get('type', None)
-            if thisUuid    == self.uuidToWaitFor and \
-               thisMsgType == 'resp':
-                self.resDict['uuidToWaitFor'] = thisResDict
+    def awaitSynchronousReturn(self, topicName, rawResult, msgOffset):
+        '''
+        A callback for TopicWaiter. Invoked from a different thread!!
+        This callback is installed by publish() when a synchronous
+        bus 'call' is executed. The main thread, i.e. publish() will
+        have delivered the request to the bus, and initialized the 
+        following instance variables for us:
+
+          * self.uuidToWaitFor: the message id an incoming result must have
+          * self.syncResultError: a place for this method to place an error message if necessary
+          * self.resultArrivedEvent: a threading.Event() obj which this method will set() when it's done.
+        
+        :param topicName: name of topic on which a message arrived
+        :type topicName: string
+        :param rawResult: message payload; a JSON string
+        :type rawResult: string
+        :param msgOffset: offset in Kafka system
+        :type msgOffset: int
+        '''
+        
+        # If this incoming message is the wrong topic,
+        # ignore; this should never happen, b/c this method
+        # is only installed as a listener when we hang for
+        # a synchronous call:
+
+        if topicName != self.topicToWaitFor:
+            return
+        
+        # Turn msg JSON into a dict:
+        try:
+            thisResDict = json.loads(rawResult)
+        except ValueError:
+            self.syncResultError = 'Bad JSON while waiting for sync response: %s' % rawResult
+            # Tell main thread that answer to synchronous
+            # call arrived, and was processed:
+            self.resultArrivedEvent.set()
+            return
+        
+        # Is this a response msg, and is it the one
+        # we are waiting for?
+        thisUuid    = thisResDict.get('id', None)
+        thisMsgType = thisResDict.get('type', None)
+        thisContent = thisResDict.get('content', None)
+        
+        if thisUuid    == self.uuidToWaitFor and \
+           thisMsgType == 'resp':
+            # All good; store just the msg content field
+            # in a result dict that's shared with the main
+            # thread:
+            self.resDict['uuidToWaitFor'] = thisContent
+        
+        # Tell main thread that answer to synchronous
+        # call arrived, and was processed:
+        self.resultArrivedEvent.set()
+    
     
     def setupLogging(self, loggingLevel, logFile):
         if BusAdapter.loggingInitialized:

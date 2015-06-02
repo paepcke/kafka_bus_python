@@ -27,6 +27,12 @@ class KafkaBusException(Exception):
                              self.message,
                              ': ' + str(self.errorDetail) if self.errorDetail is not None and len(str(self.errorDetail)) > 0 else ''))
         
+class KafkaServerNotFound(KafkaBusException):
+    '''
+    No Kafka server was found
+    '''
+    pass
+
 class InsufficientInformation(KafkaBusException):
     '''
     A bus message does not contain all the information
@@ -42,6 +48,20 @@ class BadInformation(KafkaBusException):
     A bus message does not contain syntactically
     or semantically incorrect information
     Instance variable 'errorDetail' contains details 
+    '''
+    pass
+    
+class SyncCallTimedOut(KafkaBusException):
+    '''
+    A synchronous call to a bus module did not
+    return a result within a given timeout.
+    '''
+    pass
+
+class SyncCallRuntimeError(KafkaBusException):
+    '''
+    Error while processing an incoming result to
+    a synchronous call.
     '''
     pass
     

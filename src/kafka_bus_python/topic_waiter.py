@@ -5,7 +5,10 @@ Created on May 19, 2015
 '''
 import threading
 
+from kafka.common import KafkaTimeoutError
 from kafka.consumer.kafka import KafkaConsumer
+
+from kafka_bus_python.kafka_bus_exceptions import KafkaServerNotFound
 
 
 class TopicWaiter(threading.Thread):
@@ -16,7 +19,7 @@ class TopicWaiter(threading.Thread):
     # Max size of an incoming msg: 1MB
     fetch_message_max_bytes = 1024 * 1024 *1024
 
-    def __init__(self, topicName, busAdapter, kafkaGroupId, deliveryCallback=None, eventObj=None):
+    def __init__(self, topicName, busAdapter, kafkaGroupId, deliveryCallback=None, eventObj=None, kafkaLiveCheckTimeout=30):
         '''
         Initialize list of callback functions. Remember the Event object
         to raise whenever a message arrives.
@@ -41,6 +44,10 @@ class TopicWaiter(threading.Thread):
         :param eventObj: optional :class:`threading.Event` object to set()
             when a message arrives.
         :type eventObj: threading.Event
+        :param kafkaLiveCheckTimeout: timeout in (fractional) seconds to
+            wait when checking for a live Kafka server being available.
+        :type kafkaLiveCheckTimeout: float
+        :raise KafkaServerNotFound when no Kafka server responds
         '''
 
         threading.Thread.__init__(self)
@@ -61,8 +68,15 @@ class TopicWaiter(threading.Thread):
         
         # Make sure the topic exists in the Kafka server.
         # If it did not exist before, the following call
-        # will create it:
-        self.busModule.kafkaClient.ensure_topic_exists(self.topicName)
+        # will create it. Since ensure_topic_exists() creates a  
+        # topic if it does not exist, timeout is equivalent to 
+        # checking whether a Kafka server is alive.
+
+        try:
+            self.busModule.kafkaClient.ensure_topic_exists(self.topicName, kafkaLiveCheckTimeout)
+        except KafkaTimeoutError:
+            raise KafkaServerNotFound('No Kafka server responded to topic subscription within %s seconds' % kafkaLiveCheckTimeout)
+        
         
 #         self.kafkaConsumer = SimpleConsumer(self.busModule.kafkaClient, 
 #                                             group=self.kafkaGroupId, 
