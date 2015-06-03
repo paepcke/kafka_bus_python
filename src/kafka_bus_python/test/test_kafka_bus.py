@@ -10,9 +10,10 @@ import time
 import unittest
 
 from kafka_bus_python.kafka_bus import BusAdapter
+from kafka_bus_python.test.echo_service import EchoServer
 
 
-TEST_ALL = True
+TEST_ALL = False
 
 class TestKafkaBus(unittest.TestCase):
 
@@ -35,7 +36,9 @@ class TestKafkaBus(unittest.TestCase):
         try:
             # If a test producer was running, stop it:
             self.testProducer.stop()
-            self.testProducer.setTrigger()
+            self.testProducer.join(3)
+            if self.testProducer.is_alive():
+                raise RuntimeError('Could not kill testProducer.')
         except:
             pass
         self.deliveryEvent.clear()
@@ -190,18 +193,26 @@ class TestKafkaBus(unittest.TestCase):
         self.assertTrue(self.deliveryEvent.isSet())
         self.assertTrue(self.altDeliveryEvent.isSet())
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testSynchronousCall(self):
 
-        # Create a producer that immediately sends a single message
-        # to topic self.testTopic, and then goes away:
-        self.testProducer = TestProducer(self.testTopic)
-        
-        #*****self.bus.
-        
-        # Make sure msg is received:
-        self.assertTrue(self.awaitExpectedMsg())
-        self.assertMsgContentReasonable()        
+        subscriptionsOnEntry = self.bus.mySubscriptions()
+
+        # Start an echo service:
+        echoService = EchoServer()
+        try:
+            echoRes = self.bus.publish('This is a test', 'echo', sync=True)
+            self.assertEqual(echoRes, 'This is a test')
+        finally:
+            echoService.stop()
+            echoService.join(5)
+            if echoService.isAlive():
+                raise RuntimeError("Could not kill echo server.")
+            
+            # Now we should only have subscriptions that were
+            # already there on entry to this method:
+            self.assertEqual(subscriptionsOnEntry, self.bus.mySubscriptions())
+
     #--------------------------------------------  Support Methods ------------------------
 
         
@@ -310,6 +321,7 @@ class TestProducer(threading.Thread):
         
     def stop(self):
         self.done = True
+        self.setTrigger()
         
     def run(self):
         

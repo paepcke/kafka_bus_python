@@ -17,8 +17,9 @@ from kafka.client import KafkaClient
 from kafka.common import KafkaTimeoutError, KafkaUnavailableError
 from kafka.producer.simple import SimpleProducer
 
-from kafka_bus_python.kafka_bus_exceptions import SyncCallTimedOut, \
-    SyncCallRuntimeError, BadInformation
+from kafka_bus_exceptions import SyncCallTimedOut, SyncCallRuntimeError, \
+    BadInformation
+from kafka_bus_python.bus_message import BusMessage
 from kafka_bus_python.kafka_bus_utils import JSONEncoderBusExtended
 from kafka_bus_python.topic_waiter import TopicWaiter
 
@@ -26,12 +27,32 @@ from kafka_bus_python.topic_waiter import TopicWaiter
 class BusAdapter(object):
     '''
     The BusAdapter class is intended to be imported to bus modules.
+    Instances of this class provide the software bus illusion over
+    Kafka. The most important methods are:
+        
+        * publish()
+        * waitForMessage()
+        * subscribeToTopic()
+        * unSubscribeFromTopic()
+    
+    In addition, clients of this class may install multiple listeners
+    for any given topic. The publish() method may be used asynchronously,
+    just to send a message to subscribing modules on the bus, or
+    synchronously like a remote procedure call.
+        
+    The BusAdapter wraps payloads into a JSON structure
+    as follows: 
     
     'id'     : <RFC 4122 UUID Version 4>   # e.g. 'b0f4259e-3d01-44bd-9eb3-25981c2dc643'
     'type'   : {req | resp}
     'status' : { OK | ERROR }
     'time'   : <ISO 8601>                  # e.g. '2015-05-31T17:13:41.957350'
     'content': <text>
+    
+    It is the responsibility of listener functions to 
+    strip this header away, if desired. For an example
+    see echo_service.EchoServer's echoRequestDelivery()
+    method.
     
     '''
     
@@ -148,6 +169,23 @@ class BusAdapter(object):
         all the required information. In this case, parameter topicName
         overrides a topic name that might be stored in the BusMessage.
         
+        Messages are wrapped in a JSON structure that provides
+        'id', 'type', 'time', and 'content' fields. The 'content' field
+        will contain the message payload.
+        
+        Two ways of using this method: asynchronously, and synchronously.
+        In asynchronous invocation the passed-in message is published, and
+        this method returns immediately. For this type of invocation just
+        provide argument busMessage, and possibly topicName, if busMessage
+        is a string. 
+        
+        Synchronous invocation is just like a remote procedure call.
+        In synchronous invocation the passed-in message is published, and 
+        this method will wait for a return message that carries the same
+        message ID, and is of message type 'resp'. This method then
+        returns the **content** of the returned message; the surrounding
+        wrapper (time/msgId/msgType...) is stripped.  
+        
         :param busMessage: string or BusMessage to publish
         :type busMessage: {string | BusMessage}
         :param topicName: name of topic to publish to. If None, then 
@@ -170,9 +208,20 @@ class BusAdapter(object):
         :type timeout: float
         :param auth: reserved for later authentication mechanism.
         :type auth: not yet known
+        :return return value is only defined for synchronous invocation.
+        :rtype string
+        :raise ValueError if targeted topic name is not provided in a msg object,
+            or explicitly in the topicName parameter.
+        :raise ValueError if illegal message type is passed in.
+        :raise BadInformation if Kafka does not recognize the provided topic
+            **and** Kafka is not configured to create topics on the fly.
+        :raise SyncCallTimedOut if no response is received to a synchronous call
+            within the provided timeout period.
+        :raise SyncCallRuntimeError if a message received in response to a 
+            synchronous call cannot be parsed.
         '''
 
-        if type(busMessage) == types.StringType or type(busMessage) == types.UnicodeType: 
+        if not isinstance(busMessage, BusMessage):
             # We were passed a raw string to send. The topic name
             # to publish to better be given:
             if topicName is None:
@@ -253,7 +302,7 @@ class BusAdapter(object):
             
             # ... and wait for the answer message to invoke
             # self.awaitSynchronousReturn():
-            timedOut = self.resultArrivedEvent.wait(timeout)
+            resBeforeTimeout = self.resultArrivedEvent.wait(timeout)
             
             # Result arrived, and was placed into
             # self.resDict under the msgUuid. Remove the listener
@@ -268,7 +317,7 @@ class BusAdapter(object):
                 self.unsubscribeFromTopic(topicName)
             
             # If the 'call' timed out, raise exception:
-            if timedOut:
+            if not resBeforeTimeout:
                 raise SyncCallTimedOut('Synchronous call on topic %s timed out' % topicName)
             
             # A result arrived from the call:
@@ -584,11 +633,14 @@ class BusAdapter(object):
             # All good; store just the msg content field
             # in a result dict that's shared with the main
             # thread:
-            self.resDict['uuidToWaitFor'] = thisContent
+            self.resDict[thisUuid] = thisContent
         
-        # Tell main thread that answer to synchronous
-        # call arrived, and was processed:
-        self.resultArrivedEvent.set()
+            # Tell main thread that answer to synchronous
+            # call arrived, and was processed:
+            self.resultArrivedEvent.set()
+        else:
+            # Not the msg we are waiting for:
+            return
     
     
     def setupLogging(self, loggingLevel, logFile):

@@ -39,7 +39,11 @@ class EchoServer(threading.Thread):
     
     def stop(self):
         self.done = True
-        
+        # Release thread from its wait():
+        self.echoRequestCondition.acquire()
+        self.echoRequestCondition.notifyAll()
+        self.echoRequestCondition.release()
+                    
     def echoRequestDelivery(self, topicName, rawResult, msgOffset):
         try:
             resDict = json.loads(rawResult)
