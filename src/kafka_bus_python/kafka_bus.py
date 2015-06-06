@@ -4,6 +4,13 @@ Created on May 19, 2015
 @author: paepcke
 '''
 
+'''
+TODO: 
+   o Logger should include module name
+   o Do error responses in synchronous calls make it to LTI browser?
+   o Write channel to browser
+'''
+
 from datetime import datetime
 from functools import partial
 import functools
