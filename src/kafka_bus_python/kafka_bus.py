@@ -665,7 +665,7 @@ class BusAdapter(object):
         # the log level of the message, and the msg.
         # The datefmt=None causes ISO8601 to be used:
         
-        formatter = logging.Formatter(fmt='%(asctime)s-%(name)s-%(levelname)s: %(message)s',datefmt=None)
+        formatter = logging.Formatter(fmt='%(asctime)s-%(name)s-%(levelname)s-%(module)s: %(message)s',datefmt=None)
         
         # Create file handler if requested:
         if logFile is not None:
