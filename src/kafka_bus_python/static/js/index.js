@@ -1,13 +1,3 @@
-/*
-  $(document).ready(function () {
-    $("#postbutton").click(function () {
-      var msg = $("#poster").serialize();
-      console.log(msg);
-      $.post('http://localhost:5000/bus_test', msg);
-    });
-  });
-*/
-
 app = angular.module('ScorePoster', [])
 
 app.controller('FormControl', ['$scope', '$http', function($scope, $http) {
