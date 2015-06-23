@@ -20,14 +20,14 @@ class BusModuleProducer(object):
     def __init__(self):
         '''
         In a loop: ask for message text from command line,
-        and publish to topic 'example_use'. 
+        and publish to topic 'example_use'.
         '''
-    
+
         # Create a BusAdapter instance, telling it that its
         # server(s) are on machine mono.stanford.edu:
 
         bus = BusAdapter(kafkaHost='mono.stanford.edu')
-        
+
         while True:
             # Read one line from console:
             msgText = raw_input("Type a message to send: ('Q' to end.): ")
@@ -47,4 +47,4 @@ class BusModuleProducer(object):
                         continue
                 #*********
 if __name__ == '__main__':
-    BusModuleProducer()        
+    BusModuleProducer()
