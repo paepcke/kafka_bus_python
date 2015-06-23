@@ -1,4 +1,5 @@
 import sys
+import json
 
 from flask import Flask
 from flask import request
@@ -24,13 +25,18 @@ app = Flask(__name__)
 
 @app.route("/bus_test", methods=['GET', 'POST'])
 def busInterface():
+    # GET: Serve UI to client
     if request.method == 'GET':
-        bus.subscribeToTopic(topic)
-        return render_template('index.html') #TODO: How to print out from sub msgs?
+        return render_template('index.html')
+
+    # POST: Publish request data on bus, wait for synchronous response
+    # Returns response from downbus module
     elif request.method == 'POST':
-        msg = request.form
-        bus.publish(msg, topic)
-        return "Published to topic." #IDEA: This could inject something useful
+        req = request.data
+        resp = bus.publish(json.loads(req), topicName=topic, sync=True)
+        return resp
+
+    # Other HTTP requests should fail
     else:
         print "Erroneous request sent to bus-HTTP interface."
 
