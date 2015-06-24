@@ -6,13 +6,12 @@ import json
 import kafka
 from kafka_bus import BusAdapter
 
-#TODO: Simulated grader ScoreResponder takes messages with format:
-#  uid: String
-#  score: Integer
-# ScoreResponder converts score to a value between 0 and 1 and republishes
-# a response message on the same topic (with the same msgID).
 
 class ScoreResponder(object):
+    '''
+    ScoreResponder is a server-side module that normalizes scores in range
+    [0, 100] to range [0, 1]. Scores and
+    '''
 
     DEFAULT_TOPIC = 'helloworld'
 
@@ -62,15 +61,17 @@ class ScoreResponder(object):
         score = msg.pop('score')
 
         # Transform score to grade and push onto msg array
-        grade = '%s' % float('%.2g' % score/100)
+        grade = float(score)/100.0
         msg['grade'] = grade
 
         # Republish message on same topic
-        self.bus.publish(msg, self.topicName, msgType='resp', msgId=reqId)
+        print "Publishing response '%s: %s' as %s." % (uid, str(grade), reqID)
+        self.bus.publish(msg, self.topicName, msgType='resp', msgId=reqID)
+
 
 
 if __name__ == '__main__':
-    if (len(sys.argv1) > 1):
+    if (len(sys.argv) > 1):
         topic = sys.argv[1]
         ScoreResponder(topic)
     else:

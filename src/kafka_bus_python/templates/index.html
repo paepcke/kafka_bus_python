@@ -2,7 +2,7 @@
 <html ng-app="ScorePoster">
 
   <head>
-
+    
     <title>metapod</title>
 
     <!-- AngularJS -->
@@ -17,10 +17,12 @@
 
   </head>
 
+
   <body>
 
     <h3>Alex Kindel</h3><br>
 
+    {% raw %}
     <div ng-controller="FormControl">
       <form id="poster">
         <input type="text" size="35" ng-model="form.uid" placeholder="Name">
@@ -28,8 +30,15 @@
         <input type="button" ng-click="submit(form)" value="Post score..." ><br>
       </form><br>
 
-      <scorelist></scorelist>
+      <div ng-repeat="name in names track by $index">
+        <h4>Grades for {{name}}&nbsp;</h4>
+        <span ng-repeat="grade in grades track by $index">
+          <p>{{grade}}</p>
+        </span>
+      </div>
+
     </div>
+    {% endraw %}
 
   </body>
 

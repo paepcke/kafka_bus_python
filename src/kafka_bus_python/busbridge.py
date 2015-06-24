@@ -16,10 +16,10 @@ if (len(sys.argv) > 1):
 else:
     topic = DEFAULT_TOPIC
 
-# Initialize bus
+# Initialize bus link
 bus = BusAdapter()
 
-# Initialize Flask frontend
+# Initialize Flask app
 app = Flask(__name__)
 
 
@@ -34,7 +34,7 @@ def busInterface():
     elif request.method == 'POST':
         req = request.data
         resp = bus.publish(json.loads(req), topicName=topic, sync=True)
-        return resp
+        return json.dumps(resp)
 
     # Other HTTP requests should fail
     else:
