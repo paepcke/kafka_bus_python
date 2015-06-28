@@ -116,18 +116,23 @@ class BusAdapter(object):
         
         self.setupLogging(loggingLevel, logFile)
 
-        try:
-            for hostPortTuple in BusAdapter.KAFKA_SERVERS:
-                self.logDebug('Contacting Kafka server at %s:%s...' % hostPortTuple)
+        for hostPortTuple in BusAdapter.KAFKA_SERVERS:
+            self.logDebug('Contacting Kafka server at %s:%s...' % hostPortTuple)
+            try:
                 self.kafkaClient = KafkaClient("%s:%s" % hostPortTuple)
-                self.logDebug('Successfully contacted Kafka server at %s:%s...' % hostPortTuple)
-                # If succeeded, init the 'bootstrap_servers' array
-                # referenced in topic_waiter.py:
-                self.bootstrapServers = ['%s:%s' % hostPortTuple]
-                # Don't try any other servers:
-                break
-        except KafkaUnavailableError:
-            raise KafkaUnavailableError("No Kafka server found running at any of %s." % str(BusAdapter.KAFKA_SERVERS))
+            except KafkaUnavailableError:
+                # Have we just contacted the last of the available
+                # servers?
+                if hostPortTuple == BusAdapter.KAFKA_SERVERS[-1]:
+                    raise KafkaUnavailableError("No Kafka server found running at any of %s." % str(BusAdapter.KAFKA_SERVERS))
+                else:
+                    continue
+            self.logDebug('Successfully contacted Kafka server at %s:%s...' % hostPortTuple)
+            # If succeeded, init the 'bootstrap_servers' array
+            # referenced in topic_waiter.py:
+            self.bootstrapServers = ['%s:%s' % hostPortTuple]
+            # Don't try any other servers:
+            break
                 
         self.producer    = SimpleProducer(self.kafkaClient)
 
