@@ -8,7 +8,7 @@ import threading
 from kafka.common import KafkaTimeoutError
 from kafka.consumer.kafka import KafkaConsumer
 
-from kafka_bus_python.kafka_bus_exceptions import KafkaServerNotFound
+from kafka_bus_exceptions import KafkaServerNotFound
 
 
 class TopicWaiter(threading.Thread):

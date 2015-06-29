@@ -34,13 +34,16 @@ class BusModuleConsumer(object):
             self.topicName = topicName
         
         # The following statement is needed only 
-        # if your callback is a method (rather than a top 
+        # if your callback is a *method* (rather than a top 
         # level function). That's because Python methods
         # take 'self' as a first argument, while the Bus 
         # expects a function that just takes topicName, msgText, and msgOffset.
         # The following statement creates a function wrapper around 
         # our callback method that has the leading 'self' parameter built 
-        # in. The process is called function currying:
+        # in. The process is called function currying. If
+        # printMessage() were a top level function, we would 
+        # simply pass printMessage to the subscribeToTopic() call
+        # below:
         
         self.exampleDeliveryMethod = functools.partial(self.printMessage)        
         
@@ -89,5 +92,5 @@ if __name__ == '__main__':
             print("Begin listening to topic '%s'..." % arg)
             BusModuleConsumer(topicName=arg)
     else:
-        print("Begin listening to topic '%s'..." % BusModuleConsumer.defaultTopic)
+        print("Begin listening to topic '%s'..." % BusModuleConsumer.DEFAULT_TOPIC)
         BusModuleConsumer()

@@ -11,7 +11,7 @@ setup(
     # Dependencies on other packages:
     setup_requires   = ['nose>=1.1.2'],
     tests_require    = test_requirements,
-    install_requires = ['kafka-python>=0.9.3', 
+    install_requires = ['kafka-python>=0.9.4', 
 			'configparser>=3.3.0r2', 
 			'argparse>=1.2.1', 
 			'unidecode>=0.04.14', 

@@ -30,9 +30,9 @@ from kafka.producer.simple import SimpleProducer
 
 from kafka_bus_exceptions import SyncCallTimedOut, SyncCallRuntimeError, \
     BadInformation
-from kafka_bus_python.bus_message import BusMessage
-from kafka_bus_python.kafka_bus_utils import _JSONEncoderBusExtended
-from kafka_bus_python.topic_waiter import TopicWaiter
+from bus_message import BusMessage
+from kafka_bus_utils import _JSONEncoderBusExtended
+from topic_waiter import TopicWaiter
 
 
 class BusAdapter(object):
@@ -51,6 +51,8 @@ class BusAdapter(object):
         * returnError()
         * close()
         
+    For simple examples see :py:class:`kafka_bus_python.example_producer.BusModuleProducer`
+    and :py:class:`kafka_bus_python.example_consumer.BusModuleConsumer`.
     
     Clients of this class may install multiple listeners
     for any given topic. The publish() method may be used asynchronously,
