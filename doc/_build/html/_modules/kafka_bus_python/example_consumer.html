@@ -85,13 +85,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">topicName</span> <span class="o">=</span> <span class="n">topicName</span>
         
         <span class="c"># The following statement is needed only </span>
-        <span class="c"># if your callback is a method (rather than a top </span>
+        <span class="c"># if your callback is a *method* (rather than a top </span>
         <span class="c"># level function). That&#39;s because Python methods</span>
         <span class="c"># take &#39;self&#39; as a first argument, while the Bus </span>
         <span class="c"># expects a function that just takes topicName, msgText, and msgOffset.</span>
         <span class="c"># The following statement creates a function wrapper around </span>
         <span class="c"># our callback method that has the leading &#39;self&#39; parameter built </span>
-        <span class="c"># in. The process is called function currying:</span>
+        <span class="c"># in. The process is called function currying. If</span>
+        <span class="c"># printMessage() were a top level function, we would </span>
+        <span class="c"># simply pass printMessage to the subscribeToTopic() call</span>
+        <span class="c"># below:</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">exampleDeliveryMethod</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">printMessage</span><span class="p">)</span>        
         
@@ -140,7 +143,7 @@
             <span class="k">print</span><span class="p">(</span><span class="s">&quot;Begin listening to topic &#39;</span><span class="si">%s</span><span class="s">&#39;...&quot;</span> <span class="o">%</span> <span class="n">arg</span><span class="p">)</span>
             <span class="n">BusModuleConsumer</span><span class="p">(</span><span class="n">topicName</span><span class="o">=</span><span class="n">arg</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Begin listening to topic &#39;</span><span class="si">%s</span><span class="s">&#39;...&quot;</span> <span class="o">%</span> <span class="n">BusModuleConsumer</span><span class="o">.</span><span class="n">defaultTopic</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Begin listening to topic &#39;</span><span class="si">%s</span><span class="s">&#39;...&quot;</span> <span class="o">%</span> <span class="n">BusModuleConsumer</span><span class="o">.</span><span class="n">DEFAULT_TOPIC</span><span class="p">)</span>
         <span class="n">BusModuleConsumer</span><span class="p">()</span>
 </pre></div>
 

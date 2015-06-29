@@ -32,14 +32,16 @@ from kafka_bus_exceptions import SyncCallTimedOut, SyncCallRuntimeError, \
     BadInformation
 from bus_message import BusMessage
 from kafka_bus_utils import _JSONEncoderBusExtended
-from topic_waiter import TopicWaiter
+from topic_waiter import _TopicWaiter
 
 
 class BusAdapter(object):
     '''
     The BusAdapter class is intended to be imported to bus modules.
     Instances of this class provide the software bus illusion over
-    Kafka. Public methods are:
+    Kafka. 
+    
+    Public methods are:
         
         * publish()
         * waitForMessage()
@@ -50,9 +52,39 @@ class BusAdapter(object):
         * mySubscriptions()
         * returnError()
         * close()
-        
-    For simple examples see :py:class:`kafka_bus_python.example_producer.BusModuleProducer`
-    and :py:class:`kafka_bus_python.example_consumer.BusModuleConsumer`.
+    
+    A minimal consumer module looks like this:
+    
+    ::
+
+        # A callback function:
+    	def printMessage(topicName, msgText, msgOffset):
+    	    print('Msg[%s]: %s' % (topicName, msgText))
+    	
+    	bus = BusAdapter()
+    	# Subscribe to a topic, passing the callback function:
+    	bus.subscribeToTopic('exampleTopic', printMessage)
+    	
+    	while True:
+    	    # do anything you like
+    	    time.sleep(10)
+		    
+    
+    A corresponding minimal producer module would be like this:
+    
+    ::
+    
+        bus = BusAdapter()
+        while True:
+            # Read one line from console:
+            msgText = raw_input("Type a message to send: ('Q' to end.): ")
+            if msgText == 'Q':
+                break
+            else:
+                bus.publish(msgText, 'exampleTopic')    
+    
+    For better structured, but equivalent examples, see :py:class:`Example Producer <kafka_bus_python.example_producer.BusModuleProducer>`
+    and :py:class:`Example Consumer <kafka_bus_python.example_consumer.BusModuleConsumer>`.
     
     Clients of this class may install multiple listeners
     for any given topic. The publish() method may be used asynchronously,
@@ -156,7 +188,7 @@ class BusAdapter(object):
         # In this case: see method :func:`addTopicListener`.
         
         # This way we can by default pass :func:`_deliverResult` to a
-        # TopicWaiter instance, and thereby cause it to invoke our
+        # _TopicWaiter instance, and thereby cause it to invoke our
         # _deliverResult() *method* (which takes the hidden 'self.'
         # Yet other callers to subscribeToTopic() can specify 
         # a *function* which only takes the non-self parameters 
@@ -400,7 +432,7 @@ class BusAdapter(object):
         if deliveryCallback is None:
             deliveryCallback = self.resultCallback
             
-        if deliveryCallback != types.FunctionType and type(deliveryCallback) != functools.partial:
+        if type(deliveryCallback) != types.FunctionType and type(deliveryCallback) != functools.partial:
             raise ValueError("Parameter deliveryCallback must be a function, was of type %s" % type(deliveryCallback))
 
         try:
@@ -419,7 +451,7 @@ class BusAdapter(object):
             
             # Create the thread that will listen to Kafka;
             # raises KafkaServerNotFound if necessary:
-            waitThread = TopicWaiter(topicName, 
+            waitThread = _TopicWaiter(topicName, 
                                      self, 
                                      self.kafkaGroupId, 
                                      deliveryCallback=deliveryCallback, 
@@ -632,7 +664,7 @@ class BusAdapter(object):
 
     def _awaitSynchronousReturn(self, topicName, rawResult, msgOffset):
         '''
-        A callback for TopicWaiter. Invoked from a different thread!!
+        A callback for _TopicWaiter. Invoked from a different thread!!
         This callback is installed by publish() when a synchronous
         bus 'call' is executed. The main thread, i.e. publish() will
         have delivered the request to the bus, and initialized the 

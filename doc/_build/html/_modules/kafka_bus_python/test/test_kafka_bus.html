@@ -276,7 +276,7 @@
 <span class="sd">        :param timeToWait: how many seconds maximally to wait till </span>
 <span class="sd">            concluding that msg won&#39;t arrive</span>
 <span class="sd">        :type timeToWait: float</span>
-<span class="sd">        :return boolean indicating whether or not a msg was received within 5sec</span>
+<span class="sd">        :return: boolean indicating whether or not a msg was received within 5sec</span>
 <span class="sd">        :rtype: boolean</span>
 <span class="sd">        &#39;&#39;&#39;</span>
 
@@ -294,9 +294,11 @@
 </div>
 <div class="viewcode-block" id="TestKafkaBus.assertMsgContentReasonable"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.assertMsgContentReasonable">[docs]</a>    <span class="k">def</span> <span class="nf">assertMsgContentReasonable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Checks that a recently received msg has</span>
-<span class="sd">        topic self.testTopic, that the payload starts with msg_,</span>
+<span class="sd">        </span>
+<span class="sd">        Checks that a recently received message has</span>
+<span class="sd">        topic self.testTopic, that the payload starts with msg,</span>
 <span class="sd">        and that offset info is an int.</span>
+<span class="sd">        </span>
 <span class="sd">        &#39;&#39;&#39;</span>
 
         <span class="c"># Make sure msg has reasonable content:        </span>
@@ -326,9 +328,10 @@
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Producer thread. Can be called with the following</span>
 <span class="sd">    characteristics:</span>
-<span class="sd">        o Send a msg once</span>
-<span class="sd">        o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.</span>
-<span class="sd">        o Send continuous stream of messages at given interval till stop() is called</span>
+<span class="sd">    </span>
+<span class="sd">        * Send a msg once</span>
+<span class="sd">        * Before sending any (one or cyclically) more msgs only after method setTrigger() was called.</span>
+<span class="sd">        * Send continuous stream of messages at given interval till stop() is called</span>
 <span class="sd">        </span>
 <span class="sd">    Message have content msg_n, where n is a rising integer.  </span>
 <span class="sd">    &#39;&#39;&#39;</span>

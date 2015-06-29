@@ -56,10 +56,14 @@
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Main module for Kafka based SchoolBus implementation.</span>
+<span class="sd">For examples of modules that use this class, see kafka_bus_modules</span>
+
+
 <span class="sd">TODO: </span>
-<span class="sd">   o Logger should include module name</span>
-<span class="sd">   o Do error responses in synchronous calls make it to LTI browser?</span>
-<span class="sd">   o Write channel to browser</span>
+<span class="sd">   * Logger should include module name</span>
+<span class="sd">   * Do error responses in synchronous calls make it to LTI browser?</span>
+<span class="sd">   * Write-channel from modules to browser iFrame or page</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
@@ -77,23 +81,63 @@
 
 <span class="kn">from</span> <span class="nn">kafka_bus_exceptions</span> <span class="kn">import</span> <span class="n">SyncCallTimedOut</span><span class="p">,</span> <span class="n">SyncCallRuntimeError</span><span class="p">,</span> \
     <span class="n">BadInformation</span>
-<span class="kn">from</span> <span class="nn">kafka_bus_python.bus_message</span> <span class="kn">import</span> <span class="n">BusMessage</span>
-<span class="kn">from</span> <span class="nn">kafka_bus_python.kafka_bus_utils</span> <span class="kn">import</span> <span class="n">JSONEncoderBusExtended</span>
-<span class="kn">from</span> <span class="nn">kafka_bus_python.topic_waiter</span> <span class="kn">import</span> <span class="n">TopicWaiter</span>
+<span class="kn">from</span> <span class="nn">bus_message</span> <span class="kn">import</span> <span class="n">BusMessage</span>
+<span class="kn">from</span> <span class="nn">kafka_bus_utils</span> <span class="kn">import</span> <span class="n">_JSONEncoderBusExtended</span>
+<span class="kn">from</span> <span class="nn">topic_waiter</span> <span class="kn">import</span> <span class="n">_TopicWaiter</span>
 
 
 <div class="viewcode-block" id="BusAdapter"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter">[docs]</a><span class="k">class</span> <span class="nc">BusAdapter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    The BusAdapter class is intended to be imported to bus modules.</span>
 <span class="sd">    Instances of this class provide the software bus illusion over</span>
-<span class="sd">    Kafka. The most important methods are:</span>
+<span class="sd">    Kafka. </span>
+<span class="sd">    </span>
+<span class="sd">    Public methods are:</span>
 <span class="sd">        </span>
 <span class="sd">        * publish()</span>
 <span class="sd">        * waitForMessage()</span>
 <span class="sd">        * subscribeToTopic()</span>
 <span class="sd">        * unSubscribeFromTopic()</span>
+<span class="sd">        * addTopicListener()</span>
+<span class="sd">        * removeTopicListener()</span>
+<span class="sd">        * mySubscriptions()</span>
+<span class="sd">        * returnError()</span>
+<span class="sd">        * close()</span>
 <span class="sd">    </span>
-<span class="sd">    In addition, clients of this class may install multiple listeners</span>
+<span class="sd">    A minimal consumer module looks like this:</span>
+<span class="sd">    </span>
+<span class="sd">    ::</span>
+
+<span class="sd">        # A callback function:</span>
+<span class="sd">    	def printMessage(topicName, msgText, msgOffset):</span>
+<span class="sd">    	    print(&#39;Msg[%s]: %s&#39; % (topicName, msgText))</span>
+<span class="sd">    	</span>
+<span class="sd">    	bus = BusAdapter()</span>
+<span class="sd">    	# Subscribe to a topic, passing the callback function:</span>
+<span class="sd">    	bus.subscribeToTopic(&#39;exampleTopic&#39;, printMessage)</span>
+<span class="sd">    	</span>
+<span class="sd">    	while True:</span>
+<span class="sd">    	    # do anything you like</span>
+<span class="sd">    	    time.sleep(10)</span>
+<span class="sd">		    </span>
+<span class="sd">    </span>
+<span class="sd">    A corresponding minimal producer module would be like this:</span>
+<span class="sd">    </span>
+<span class="sd">    ::</span>
+<span class="sd">    </span>
+<span class="sd">        bus = BusAdapter()</span>
+<span class="sd">        while True:</span>
+<span class="sd">            # Read one line from console:</span>
+<span class="sd">            msgText = raw_input(&quot;Type a message to send: (&#39;Q&#39; to end.): &quot;)</span>
+<span class="sd">            if msgText == &#39;Q&#39;:</span>
+<span class="sd">                break</span>
+<span class="sd">            else:</span>
+<span class="sd">                bus.publish(msgText, &#39;exampleTopic&#39;)    </span>
+<span class="sd">    </span>
+<span class="sd">    For better structured, but equivalent examples, see :py:class:`Example Producer &lt;kafka_bus_python.example_producer.BusModuleProducer&gt;`</span>
+<span class="sd">    and :py:class:`Example Consumer &lt;kafka_bus_python.example_consumer.BusModuleConsumer&gt;`.</span>
+<span class="sd">    </span>
+<span class="sd">    Clients of this class may install multiple listeners</span>
 <span class="sd">    for any given topic. The publish() method may be used asynchronously,</span>
 <span class="sd">    just to send a message to subscribing modules on the bus, or</span>
 <span class="sd">    synchronously like a remote procedure call.</span>
@@ -101,11 +145,13 @@
 <span class="sd">    The BusAdapter wraps payloads into a JSON structure</span>
 <span class="sd">    as follows: </span>
 <span class="sd">    </span>
-<span class="sd">    &#39;id&#39;     : &lt;RFC 4122 UUID Version 4&gt;   # e.g. &#39;b0f4259e-3d01-44bd-9eb3-25981c2dc643&#39;</span>
-<span class="sd">    &#39;type&#39;   : {req | resp}</span>
-<span class="sd">    &#39;status&#39; : { OK | ERROR }</span>
-<span class="sd">    &#39;time&#39;   : &lt;ISO 8601&gt;                  # e.g. &#39;2015-05-31T17:13:41.957350&#39;</span>
-<span class="sd">    &#39;content&#39;: &lt;text&gt;</span>
+<span class="sd">    ::</span>
+<span class="sd">    </span>
+<span class="sd">    	&#39;id&#39;     : &lt;RFC 4122 UUID Version 4&gt;   # e.g. &#39;b0f4259e-3d01-44bd-9eb3-25981c2dc643&#39;</span>
+<span class="sd">    	&#39;type&#39;   : {req | resp}</span>
+<span class="sd">    	&#39;status&#39; : { OK | ERROR }</span>
+<span class="sd">    	&#39;time&#39;   : &lt;ISO 8601&gt;                  # e.g. &#39;2015-05-31T17:13:41.957350&#39;</span>
+<span class="sd">    	&#39;content&#39;: &lt;text&gt;</span>
 <span class="sd">    </span>
 <span class="sd">    It is the responsibility of listener functions to </span>
 <span class="sd">    strip this header away, if desired. For an example</span>
@@ -114,24 +160,24 @@
 <span class="sd">    </span>
 <span class="sd">    &#39;&#39;&#39;</span>
     
-    <span class="n">LEGAL_MSG_TYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;req&#39;</span><span class="p">,</span> <span class="s">&#39;resp&#39;</span><span class="p">]</span>
-    <span class="n">LEGAL_STATUS</span>    <span class="o">=</span> <span class="p">[</span><span class="s">&#39;OK&#39;</span><span class="p">,</span> <span class="s">&#39;ERROR&#39;</span><span class="p">]</span>
+    <span class="n">_LEGAL_MSG_TYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;req&#39;</span><span class="p">,</span> <span class="s">&#39;resp&#39;</span><span class="p">]</span>
+    <span class="n">_LEGAL_STATUS</span>    <span class="o">=</span> <span class="p">[</span><span class="s">&#39;OK&#39;</span><span class="p">,</span> <span class="s">&#39;ERROR&#39;</span><span class="p">]</span>
     
-    <span class="n">DEFAULT_KAFKA_LISTEN_PORT</span> <span class="o">=</span> <span class="mi">9092</span>
-    <span class="n">KAFKA_SERVERS</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">DEFAULT_KAFKA_LISTEN_PORT</span><span class="p">),</span>
-                     <span class="p">(</span><span class="s">&#39;mono.stanford.edu&#39;</span><span class="p">,</span> <span class="n">DEFAULT_KAFKA_LISTEN_PORT</span><span class="p">),</span>
-                     <span class="p">(</span><span class="s">&#39;datastage.stanford.edu&#39;</span><span class="p">,</span> <span class="n">DEFAULT_KAFKA_LISTEN_PORT</span><span class="p">),</span>
+    <span class="n">_DEFAULT_KAFKA_LISTEN_PORT</span> <span class="o">=</span> <span class="mi">9092</span>
+    <span class="n">_KAFKA_SERVERS</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">_DEFAULT_KAFKA_LISTEN_PORT</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;mono.stanford.edu&#39;</span><span class="p">,</span> <span class="n">_DEFAULT_KAFKA_LISTEN_PORT</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s">&#39;datastage.stanford.edu&#39;</span><span class="p">,</span> <span class="n">_DEFAULT_KAFKA_LISTEN_PORT</span><span class="p">),</span>
                      <span class="p">]</span>
 
-<span class="c">#     KAFKA_SERVERS = [(&#39;mono.stanford.edu&#39;, DEFAULT_KAFKA_LISTEN_PORT),</span>
-<span class="c">#                      (&#39;localhost&#39;, DEFAULT_KAFKA_LISTEN_PORT),</span>
-<span class="c">#                      (&#39;datastage.stanford.edu&#39;, DEFAULT_KAFKA_LISTEN_PORT),</span>
+<span class="c">#     _KAFKA_SERVERS = [(&#39;mono.stanford.edu&#39;, _DEFAULT_KAFKA_LISTEN_PORT),</span>
+<span class="c">#                      (&#39;localhost&#39;, _DEFAULT_KAFKA_LISTEN_PORT),</span>
+<span class="c">#                      (&#39;datastage.stanford.edu&#39;, _DEFAULT_KAFKA_LISTEN_PORT),</span>
 <span class="c">#                      ]</span>
 
        
     <span class="c"># Remember whether logging has been initialized (class var!):</span>
-    <span class="n">loggingInitialized</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_loggingInitialized</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">_logger</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
                  <span class="n">kafkaHost</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
@@ -144,10 +190,10 @@
 <span class="sd">        Initialize communications with Kafka.</span>
 
 <span class="sd">        :param kafkaHost: hostname or ip address of host where Kafka server runs.</span>
-<span class="sd">            If None, then BusAdapter.KAFKA_SERVERS are tried in turn.</span>
+<span class="sd">            If None, then BusAdapter._KAFKA_SERVERS are tried in turn.</span>
 <span class="sd">        :type kafkaHost: {string | None}</span>
 <span class="sd">        :param kafkaPort: port at which Kafka expects clients to come in.</span>
-<span class="sd">            if None, then BusAdapter.DEFAULT_KAFKA_LISTEN_PORT is used.</span>
+<span class="sd">            if None, then BusAdapter._DEFAULT_KAFKA_LISTEN_PORT is used.</span>
 <span class="sd">        :type kafkaPort: {int | None}</span>
 <span class="sd">        :param loggingLevel: detail of logging</span>
 <span class="sd">        :type loggingLevel: {logging.DEBUG | logging.INFO | logging.ERROR}  </span>
@@ -161,21 +207,21 @@
 <span class="sd">        &#39;&#39;&#39;</span>
 
         <span class="k">if</span> <span class="n">kafkaPort</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">kafkaPort</span> <span class="o">=</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">DEFAULT_KAFKA_LISTEN_PORT</span>
+            <span class="n">kafkaPort</span> <span class="o">=</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_DEFAULT_KAFKA_LISTEN_PORT</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">kafkaPort</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kafkaGroupId</span> <span class="o">=</span> <span class="n">kafkaGroupId</span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">setupLogging</span><span class="p">(</span><span class="n">loggingLevel</span><span class="p">,</span> <span class="n">logFile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setupLogging</span><span class="p">(</span><span class="n">loggingLevel</span><span class="p">,</span> <span class="n">logFile</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">hostPortTuple</span> <span class="ow">in</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">KAFKA_SERVERS</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">hostPortTuple</span> <span class="ow">in</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_KAFKA_SERVERS</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logDebug</span><span class="p">(</span><span class="s">&#39;Contacting Kafka server at </span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">...&#39;</span> <span class="o">%</span> <span class="n">hostPortTuple</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">kafkaClient</span> <span class="o">=</span> <span class="n">KafkaClient</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">hostPortTuple</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">KafkaUnavailableError</span><span class="p">:</span>
                 <span class="c"># Have we just contacted the last of the available</span>
                 <span class="c"># servers?</span>
-                <span class="k">if</span> <span class="n">hostPortTuple</span> <span class="o">==</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">KAFKA_SERVERS</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                    <span class="k">raise</span> <span class="n">KafkaUnavailableError</span><span class="p">(</span><span class="s">&quot;No Kafka server found running at any of </span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">BusAdapter</span><span class="o">.</span><span class="n">KAFKA_SERVERS</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">hostPortTuple</span> <span class="o">==</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_KAFKA_SERVERS</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="n">KafkaUnavailableError</span><span class="p">(</span><span class="s">&quot;No Kafka server found running at any of </span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">BusAdapter</span><span class="o">.</span><span class="n">_KAFKA_SERVERS</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">continue</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logDebug</span><span class="p">(</span><span class="s">&#39;Successfully contacted Kafka server at </span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">...&#39;</span> <span class="o">%</span> <span class="n">hostPortTuple</span><span class="p">)</span>
@@ -192,18 +238,18 @@
         <span class="c"># called with just the remaining positional/keyword parms.</span>
         <span class="c"># In this case: see method :func:`addTopicListener`.</span>
         
-        <span class="c"># This way we can by default pass :func:`deliverResult` to a</span>
-        <span class="c"># TopicWaiter instance, and thereby cause it to invoke our</span>
-        <span class="c"># deliverResult() *method* (which takes the hidden &#39;self.&#39;</span>
+        <span class="c"># This way we can by default pass :func:`_deliverResult` to a</span>
+        <span class="c"># _TopicWaiter instance, and thereby cause it to invoke our</span>
+        <span class="c"># _deliverResult() *method* (which takes the hidden &#39;self.&#39;</span>
         <span class="c"># Yet other callers to subscribeToTopic() can specify </span>
         <span class="c"># a *function* which only takes the non-self parameters </span>
         <span class="c"># specified in method :func:`addTopicListener`. </span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">resultCallback</span>    <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deliverResult</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resultCallback</span>    <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_deliverResult</span><span class="p">)</span>
         
         <span class="c"># A function that will be called when the result to</span>
         <span class="c"># a synchronous call arrives:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">syncResultWaiter</span>  <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">awaitSynchronousReturn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">syncResultWaiter</span>  <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_awaitSynchronousReturn</span><span class="p">)</span>
         
         <span class="c"># Dict mapping topic names to thread objects that listen</span>
         <span class="c"># to the respective topic. Used by subscribeToTopic() and</span>
@@ -217,7 +263,7 @@
         
         <span class="c"># Dict used for synchronous calls: the dict maps</span>
         <span class="c"># msg UUIDs to the results of a call. Set in </span>
-        <span class="c"># awaitSynchronousReturn(), and emptied in publish()</span>
+        <span class="c"># _awaitSynchronousReturn(), and emptied in publish()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resDict</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="c"># --------------------------  Pulic Methods ---------------------</span>
@@ -271,16 +317,16 @@
 <span class="sd">        :type timeout: float</span>
 <span class="sd">        :param auth: reserved for later authentication mechanism.</span>
 <span class="sd">        :type auth: not yet known</span>
-<span class="sd">        :return return value is only defined for synchronous invocation.</span>
-<span class="sd">        :rtype string</span>
-<span class="sd">        :raise ValueError if targeted topic name is not provided in a msg object,</span>
+<span class="sd">        :return: value is only defined for synchronous invocation.</span>
+<span class="sd">        :rtype: string</span>
+<span class="sd">        :raises ValueError: if targeted topic name is not provided in a msg object,</span>
 <span class="sd">            or explicitly in the topicName parameter.</span>
-<span class="sd">        :raise ValueError if illegal message type is passed in.</span>
-<span class="sd">        :raise BadInformation if Kafka does not recognize the provided topic</span>
+<span class="sd">        :raises ValueError: if illegal message type is passed in.</span>
+<span class="sd">        :raises BadInformation: if Kafka does not recognize the provided topic</span>
 <span class="sd">            **and** Kafka is not configured to create topics on the fly.</span>
-<span class="sd">        :raise SyncCallTimedOut if no response is received to a synchronous call</span>
+<span class="sd">        :raises SyncCallTimedOut: if no response is received to a synchronous call</span>
 <span class="sd">            within the provided timeout period.</span>
-<span class="sd">        :raise SyncCallRuntimeError if a message received in response to a </span>
+<span class="sd">        :raises SyncCallRuntimeError: if a message received in response to a </span>
 <span class="sd">            synchronous call cannot be parsed.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
 
@@ -315,8 +361,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">msgUuid</span> <span class="o">=</span> <span class="n">msgId</span>
         <span class="c"># Sanity check on message type:</span>
-        <span class="k">if</span> <span class="n">msgType</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">LEGAL_MSG_TYPES</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Legal message types are </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">BusAdapter</span><span class="o">.</span><span class="n">LEGAL_MSG_TYPES</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">msgType</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_LEGAL_MSG_TYPES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Legal message types are </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">BusAdapter</span><span class="o">.</span><span class="n">_LEGAL_MSG_TYPES</span><span class="p">))</span>
         
         <span class="n">msgDict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;time&#39;</span><span class="p">,</span> <span class="s">&#39;content&#39;</span><span class="p">],</span>
                            <span class="p">[</span><span class="n">msgUuid</span><span class="p">,</span> <span class="n">msgType</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">msg</span><span class="p">]))</span>
@@ -364,7 +410,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">producer</span><span class="o">.</span><span class="n">send_messages</span><span class="p">(</span><span class="n">topicName</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msgDict</span><span class="p">))</span>
             
             <span class="c"># ... and wait for the answer message to invoke</span>
-            <span class="c"># self.awaitSynchronousReturn():</span>
+            <span class="c"># self._awaitSynchronousReturn():</span>
             <span class="n">resBeforeTimeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resultArrivedEvent</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
             
             <span class="c"># Result arrived, and was placed into</span>
@@ -416,7 +462,7 @@
 <span class="sd">        saving a subsequent call to addTopicListener(). See addTopicListener()</span>
 <span class="sd">        for details.</span>
 <span class="sd">        </span>
-<span class="sd">        If deliveryCallback is absent or None, then method deliverResult()</span>
+<span class="sd">        If deliveryCallback is absent or None, then method _deliverResult()</span>
 <span class="sd">        in this class will be used. That method is intended to be a </span>
 <span class="sd">        placeholder with no side effects.</span>
 <span class="sd">        </span>
@@ -431,13 +477,13 @@
 <span class="sd">        :param kafkaLiveCheckTimeout: timeout in (fractional) seconds to</span>
 <span class="sd">            wait when checking for a live Kafka server being available.</span>
 <span class="sd">        :type kafkaLiveCheckTimeout: float</span>
-<span class="sd">        :raise KafkaServerNotFound when no Kafka server responds</span>
+<span class="sd">        :raises KafkaServerNotFound: when no Kafka server responds</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">deliveryCallback</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">deliveryCallback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resultCallback</span>
             
-        <span class="k">if</span> <span class="n">deliveryCallback</span> <span class="o">!=</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">deliveryCallback</span><span class="p">)</span> <span class="o">!=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">deliveryCallback</span><span class="p">)</span> <span class="o">!=</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">deliveryCallback</span><span class="p">)</span> <span class="o">!=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Parameter deliveryCallback must be a function, was of type </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">deliveryCallback</span><span class="p">))</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -456,7 +502,7 @@
             
             <span class="c"># Create the thread that will listen to Kafka;</span>
             <span class="c"># raises KafkaServerNotFound if necessary:</span>
-            <span class="n">waitThread</span> <span class="o">=</span> <span class="n">TopicWaiter</span><span class="p">(</span><span class="n">topicName</span><span class="p">,</span> 
+            <span class="n">waitThread</span> <span class="o">=</span> <span class="n">_TopicWaiter</span><span class="p">(</span><span class="n">topicName</span><span class="p">,</span> 
                                      <span class="bp">self</span><span class="p">,</span> 
                                      <span class="bp">self</span><span class="o">.</span><span class="n">kafkaGroupId</span><span class="p">,</span> 
                                      <span class="n">deliveryCallback</span><span class="o">=</span><span class="n">deliveryCallback</span><span class="p">,</span> 
@@ -506,16 +552,16 @@
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Add a listener function for a topic for which a</span>
 <span class="sd">        subscription already exists. Parameter deliverCallback</span>
-<span class="sd">        must be a function accepting parameters:</span>
-<span class="sd">            topicName, rawResult, msgOffset</span>
+<span class="sd">        must be a function accepting parameters: topicName, rawResult, msgOffset</span>
 <span class="sd">        It is an error to call the method without first</span>
 <span class="sd">        having subscribed to the topic.</span>
 <span class="sd">        </span>
-<span class="sd">        :param topicName:</span>
-<span class="sd">        :type topicName:</span>
-<span class="sd">        :param deliveryCallback:</span>
-<span class="sd">        :type deliveryCallback:</span>
-<span class="sd">        :raise NameError if caller has not previously subscribed to topicName.</span>
+<span class="sd">        :param topicName: name of topic to add</span>
+<span class="sd">        :type topicName: String</span>
+<span class="sd">        :param deliveryCallback: function to call when message to this topic arrives</span>
+<span class="sd">        :type deliveryCallback: &lt;function(topicName, rawResult, msgOffset)</span>
+<span class="sd">        :raises NameError: if caller has not previously subscribed to topicName.</span>
+
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">deliveryCallback</span> <span class="o">!=</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">deliveryCallback</span><span class="p">)</span> <span class="o">!=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">:</span>
@@ -590,9 +636,9 @@
 <span class="sd">        :type topicName:</span>
 <span class="sd">        :param timeout: seconds (or fractions of second) to wait.</span>
 <span class="sd">        :type timeout: float</span>
-<span class="sd">        :returns True if a message arrived in time, else returnes False</span>
-<span class="sd">        :rtype boolean</span>
-<span class="sd">        :raise NameError on attempt to wait for a topic for which no subscription exists.</span>
+<span class="sd">        :returns: True if a message arrived in time, else returnes False</span>
+<span class="sd">        :rtype: boolean</span>
+<span class="sd">        :raises NameError: on attempt to wait for a topic for which no subscription exists.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">try</span><span class="p">:</span>
@@ -602,14 +648,34 @@
             <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s">&quot;Attempt to wait for messages on topic </span><span class="si">%s</span><span class="s">, which was never subscribed to.&quot;</span> <span class="o">%</span> <span class="n">topicName</span><span class="p">)</span>
  </div>
 <div class="viewcode-block" id="BusAdapter.mySubscriptions"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.mySubscriptions">[docs]</a>    <span class="k">def</span> <span class="nf">mySubscriptions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return a list of topic names to which this bus adapter is subscribed.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: List of topics to which caller is subscribed</span>
+<span class="sd">        :rtype: [String]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">topicEvents</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         </div>
 <div class="viewcode-block" id="BusAdapter.returnError"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.returnError">[docs]</a>    <span class="k">def</span> <span class="nf">returnError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req_key</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">errMsg</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Convencience method when handling an incoming message.</span>
+<span class="sd">        Returns a message that is marked as an error return.</span>
+<span class="sd">        </span>
+<span class="sd">        :param req_key: key of the incoming message; it will be used in the return message as well.</span>
+<span class="sd">        :type req_key: String</span>
+<span class="sd">        :param topicName: name of topic to use in the return message</span>
+<span class="sd">        :type topicName: String</span>
+<span class="sd">        :param errMsg: error message to include in the return message</span>
+<span class="sd">        :type errMsg: String</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
         <span class="n">errMsg</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;resp_key&#39;</span>    <span class="p">:</span> <span class="n">req_key</span><span class="p">,</span>
+                  <span class="s">&#39;type&#39;</span>        <span class="p">:</span> <span class="s">&#39;resp&#39;</span><span class="p">,</span>
                   <span class="s">&#39;status&#39;</span>      <span class="p">:</span> <span class="s">&#39;ERROR&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;time&#39;</span>        <span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
                   <span class="s">&#39;content&#39;</span>     <span class="p">:</span> <span class="n">errMsg</span>
                  <span class="p">}</span>
-        <span class="n">errMsgJSON</span> <span class="o">=</span> <span class="n">JSONEncoderBusExtended</span><span class="o">.</span><span class="n">makeJSON</span><span class="p">(</span><span class="n">errMsg</span><span class="p">)</span>
+        <span class="n">errMsgJSON</span> <span class="o">=</span> <span class="n">_JSONEncoderBusExtended</span><span class="o">.</span><span class="n">makeJSON</span><span class="p">(</span><span class="n">errMsg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">errMsgJSON</span><span class="p">,</span> <span class="n">topicName</span><span class="p">)</span>
       </div>
 <div class="viewcode-block" id="BusAdapter.close"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -627,7 +693,7 @@
 <span class="c"># --------------------------  Private Methods ---------------------</span>
 
 </div>
-<div class="viewcode-block" id="BusAdapter.deliverResult"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.deliverResult">[docs]</a>    <span class="k">def</span> <span class="nf">deliverResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">rawResult</span><span class="p">,</span> <span class="n">msgOffset</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_deliverResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">rawResult</span><span class="p">,</span> <span class="n">msgOffset</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Simple default message delivery callback. Just prints </span>
 <span class="sd">        topic name and content. Override in subclass to get </span>
@@ -646,10 +712,10 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">print</span><span class="p">(</span><span class="s">&#39;Msg at offset </span><span class="si">%d</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">msgOffset</span><span class="p">,</span><span class="n">rawResult</span><span class="p">))</span>
         
-</div>
-<div class="viewcode-block" id="BusAdapter.awaitSynchronousReturn"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.awaitSynchronousReturn">[docs]</a>    <span class="k">def</span> <span class="nf">awaitSynchronousReturn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">rawResult</span><span class="p">,</span> <span class="n">msgOffset</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_awaitSynchronousReturn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">rawResult</span><span class="p">,</span> <span class="n">msgOffset</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        A callback for TopicWaiter. Invoked from a different thread!!</span>
+<span class="sd">        A callback for _TopicWaiter. Invoked from a different thread!!</span>
 <span class="sd">        This callback is installed by publish() when a synchronous</span>
 <span class="sd">        bus &#39;call&#39; is executed. The main thread, i.e. publish() will</span>
 <span class="sd">        have delivered the request to the bus, and initialized the </span>
@@ -705,19 +771,19 @@
             <span class="c"># Not the msg we are waiting for:</span>
             <span class="k">return</span>
     
-    </div>
-<div class="viewcode-block" id="BusAdapter.setupLogging"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.setupLogging">[docs]</a>    <span class="k">def</span> <span class="nf">setupLogging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggingLevel</span><span class="p">,</span> <span class="n">logFile</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">loggingInitialized</span><span class="p">:</span>
+    
+    <span class="k">def</span> <span class="nf">_setupLogging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggingLevel</span><span class="p">,</span> <span class="n">logFile</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_loggingInitialized</span><span class="p">:</span>
             <span class="c"># Remove previous file or console handlers,</span>
             <span class="c"># else we get logging output doubled:</span>
-            <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
             
         <span class="c"># Set up logging:</span>
-        <span class="c"># A logger named SchoolBusLog:</span>
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;SchoolBusLog&#39;</span><span class="p">)</span>
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loggingLevel</span><span class="p">)</span>
+        <span class="c"># A _logger named SchoolBusLog:</span>
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;SchoolBusLog&#39;</span><span class="p">)</span>
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">loggingLevel</span><span class="p">)</span>
         
-        <span class="c"># A msg formatter that shows datetime, logger name, </span>
+        <span class="c"># A msg formatter that shows datetime, _logger name, </span>
         <span class="c"># the log level of the message, and the msg.</span>
         <span class="c"># The datefmt=None causes ISO8601 to be used:</span>
         
@@ -735,28 +801,61 @@
 <span class="c">#         formatter = logging.Formatter(&#39;%(asctime)s - %(name)s - %(levelname)s - %(message)s&#39;)</span>
 <span class="c">#         fh.setFormatter(formatter)</span>
 <span class="c">#         ch.setFormatter(formatter)</span>
-        <span class="c"># Add the handler to the logger</span>
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+        <span class="c"># Add the handler to the _logger</span>
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
         <span class="c">#**********************</span>
-        <span class="c">#BusAdapter.logger.info(&quot;Info for you&quot;)</span>
-        <span class="c">#BusAdapter.logger.warn(&quot;Warning for you&quot;)</span>
-        <span class="c">#BusAdapter.logger.debug(&quot;Debug for you&quot;)</span>
+        <span class="c">#BusAdapter._logger.info(&quot;Info for you&quot;)</span>
+        <span class="c">#BusAdapter._logger.warn(&quot;Warning for you&quot;)</span>
+        <span class="c">#BusAdapter._logger.debug(&quot;Debug for you&quot;)</span>
         <span class="c">#**********************</span>
         
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">loggingInitialized</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_loggingInitialized</span> <span class="o">=</span> <span class="bp">True</span>
 
-</div>
+
 <div class="viewcode-block" id="BusAdapter.logWarn"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.logWarn">[docs]</a>    <span class="k">def</span> <span class="nf">logWarn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Loccally log a warning message using the Python logging facility.</span>
+<span class="sd">        The _logger name is &#39;SchoolBusLog&#39;. Change format or _logger</span>
+<span class="sd">        name by modifying _setupLogging().</span>
+<span class="sd">        </span>
+<span class="sd">        :param msg: message to log</span>
+<span class="sd">        :type msg: String</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="BusAdapter.logInfo"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.logInfo">[docs]</a>    <span class="k">def</span> <span class="nf">logInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Locally log an info message using the Python logging facility.</span>
+<span class="sd">        The _logger name is &#39;SchoolBusLog&#39;. Change format or _logger</span>
+<span class="sd">        name by modifying _setupLogging().</span>
+<span class="sd">        </span>
+<span class="sd">        :param msg: message to log</span>
+<span class="sd">        :type msg: String</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
      </div>
 <div class="viewcode-block" id="BusAdapter.logError"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.logError">[docs]</a>    <span class="k">def</span> <span class="nf">logError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Locally log an error message using the Python logging facility.</span>
+<span class="sd">        The _logger name is &#39;SchoolBusLog&#39;. Change format or _logger</span>
+<span class="sd">        name by modifying _setupLogging().</span>
+<span class="sd">        </span>
+<span class="sd">        :param msg: message to log</span>
+<span class="sd">        :type msg: String</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="BusAdapter.logDebug"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.kafka_bus.BusAdapter.logDebug">[docs]</a>    <span class="k">def</span> <span class="nf">logDebug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Locally log a debug message using the Python logging facility.</span>
+<span class="sd">        The _logger name is &#39;SchoolBusLog&#39;. Change format or _logger</span>
+<span class="sd">        name by modifying _setupLogging().</span>
+<span class="sd">        </span>
+<span class="sd">        :param msg: message to log</span>
+<span class="sd">        :type msg: String</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">BusAdapter</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 </pre></div></div></div>
 
           </div>

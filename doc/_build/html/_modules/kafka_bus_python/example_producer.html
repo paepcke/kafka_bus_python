@@ -57,8 +57,6 @@
 <span class="sd">@author: paepcke</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
-<span class="kn">import</span> <span class="nn">kafka</span>
-
 <span class="kn">from</span> <span class="nn">kafka_bus</span> <span class="kn">import</span> <span class="n">BusAdapter</span>
 
 
@@ -76,27 +74,22 @@
     
         <span class="c"># Create a BusAdapter instance, telling it that its</span>
         <span class="c"># server(s) are on machine mono.stanford.edu:</span>
-
-        <span class="n">bus</span> <span class="o">=</span> <span class="n">BusAdapter</span><span class="p">(</span><span class="n">kafkaHost</span><span class="o">=</span><span class="s">&#39;mono.stanford.edu&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">BusAdapter</span><span class="p">(</span><span class="n">kafkaHost</span><span class="o">=</span><span class="s">&#39;mono.stanford.edu&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sendMessages</span><span class="p">()</span>
         
+<div class="viewcode-block" id="BusModuleProducer.sendMessages"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.example_producer.BusModuleProducer.sendMessages">[docs]</a>    <span class="k">def</span> <span class="nf">sendMessages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        In a loop, ask for message to send, and send it. </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
         <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
             <span class="c"># Read one line from console:</span>
             <span class="n">msgText</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="s">&quot;Type a message to send: (&#39;Q&#39; to end.): &quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">msgText</span> <span class="o">==</span> <span class="s">&#39;Q&#39;</span><span class="p">:</span>
                 <span class="k">break</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c">#*********</span>
-                <span class="c"># bus.publish(msgText, &#39;example_use&#39;)</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">bus</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msgText</span><span class="p">,</span> <span class="s">&#39;example_use&#39;</span><span class="p">)</span>
-                <span class="k">except</span> <span class="n">kafka</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">FailedPayloadsError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="k">print</span><span class="p">(</span><span class="s">&quot;Got payload error, retrying... (</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="sb">`e`</span><span class="p">)</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">bus</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msgText</span><span class="p">,</span> <span class="s">&#39;example_use&#39;</span><span class="p">)</span>
-                    <span class="k">except</span> <span class="n">kafka</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">FailedPayloadsError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Got payload error again (</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="sb">`e`</span><span class="p">)</span>
-                        <span class="k">continue</span>
-                <span class="c">#*********</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msgText</span><span class="p">,</span> <span class="s">&#39;example_use&#39;</span><span class="p">)</span>
+</div></div>
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">BusModuleProducer</span><span class="p">()</span>        
 </pre></div>

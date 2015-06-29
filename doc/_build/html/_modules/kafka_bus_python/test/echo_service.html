@@ -66,11 +66,13 @@
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Producer thread. Can be called with the following</span>
 <span class="sd">    characteristics:</span>
-<span class="sd">        o Send a msg once</span>
-<span class="sd">        o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.</span>
-<span class="sd">        o Send continuous stream of messages at given interval till stop() is called</span>
+
+<span class="sd">        * Send a msg once</span>
+<span class="sd">        * Before sending any (one or cyclically) more msgs only after method setTrigger() was called.</span>
+<span class="sd">        * Send continuous stream of messages at given interval till stop() is called</span>
 <span class="sd">        </span>
-<span class="sd">    Message have content msg_n, where n is a rising integer.  </span>
+<span class="sd">    Message have content msg_n, where n is a rising integer.</span>
+<span class="sd">    </span>
 <span class="sd">    &#39;&#39;&#39;</span>
     
     <span class="n">ECHO_TOPIC_NAME</span> <span class="o">=</span> <span class="s">&#39;echo&#39;</span>

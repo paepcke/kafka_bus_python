@@ -57,30 +57,66 @@
 
 <div class="viewcode-block" id="BusMessage"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.bus_message.BusMessage">[docs]</a><span class="k">class</span> <span class="nc">BusMessage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    classdocs</span>
+<span class="sd">    While messages can be passed around within a module as a JSON string,</span>
+<span class="sd">    this class provides an alternative. Messages can be encapsulated</span>
+<span class="sd">    in an instance of this class while in use within a bus module.</span>
+<span class="sd">    The instance ensures that text is in UTF-8. More conveniences</span>
+<span class="sd">    could/should be added to this class. </span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pythonStruct</span><span class="p">,</span> <span class="n">topicName</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Constructor</span>
+<span class="sd">        Create a bus message.</span>
+<span class="sd">        </span>
+<span class="sd">        :param pythonStruct: Any Python structure that is to appear</span>
+<span class="sd">            on the wire in the content field of the bus message.</span>
+<span class="sd">        :type pythonStruct: &lt;any&gt;</span>
+<span class="sd">        :param topicName: topic to which the message will ultimately be published.</span>
+<span class="sd">        :type topicName: String</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setContent</span><span class="p">(</span><span class="n">pythonStruct</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">topicName</span> <span class="o">=</span> <span class="bp">None</span>
         
 <div class="viewcode-block" id="BusMessage.setContent"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.bus_message.BusMessage.setContent">[docs]</a>    <span class="k">def</span> <span class="nf">setContent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pythonStruct</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Change message content.</span>
+<span class="sd">        </span>
+<span class="sd">        :param pythonStruct: new message content</span>
+<span class="sd">        :type pythonStruct: &lt;any&gt;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">serialStruct</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pythonStruct</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">serialStruct</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;UTF-8&#39;</span><span class="p">,</span> <span class="s">&#39;ignore&#39;</span><span class="p">)</span>
         <span class="c"># Remember the raw object:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rawContent</span> <span class="o">=</span> <span class="n">pythonStruct</span>
         </div>
 <div class="viewcode-block" id="BusMessage.content"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.bus_message.BusMessage.content">[docs]</a>    <span class="k">def</span> <span class="nf">content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieve current message content.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: current UTF-8 encoded message content.</span>
+<span class="sd">        :rtype: String</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span>
     </div>
 <div class="viewcode-block" id="BusMessage.rawContent"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.bus_message.BusMessage.rawContent">[docs]</a>    <span class="k">def</span> <span class="nf">rawContent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return Python data structure that will in flattened form make up the</span>
+<span class="sd">        message content.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: unflattened Python structure</span>
+<span class="sd">        :rtype: &lt;any&gt;</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawContent</span>
     </div>
 <div class="viewcode-block" id="BusMessage.topicName"><a class="viewcode-back" href="../../kafka_bus_python.html#kafka_bus_python.bus_message.BusMessage.topicName">[docs]</a>    <span class="k">def</span> <span class="nf">topicName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Return the topic name associated with this message instance.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: topic name</span>
+<span class="sd">        :rtype: String</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">topicName</span></div></div>
 </pre></div>
 

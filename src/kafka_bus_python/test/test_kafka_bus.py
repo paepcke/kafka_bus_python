@@ -225,7 +225,7 @@ class TestKafkaBus(unittest.TestCase):
         :param timeToWait: how many seconds maximally to wait till 
             concluding that msg won't arrive
         :type timeToWait: float
-        :return boolean indicating whether or not a msg was received within 5sec
+        :return: boolean indicating whether or not a msg was received within 5sec
         :rtype: boolean
         '''
 
@@ -243,9 +243,11 @@ class TestKafkaBus(unittest.TestCase):
 
     def assertMsgContentReasonable(self):
         '''
-        Checks that a recently received msg has
-        topic self.testTopic, that the payload starts with msg_,
+        
+        Checks that a recently received message has
+        topic self.testTopic, that the payload starts with msg,
         and that offset info is an int.
+        
         '''
 
         # Make sure msg has reasonable content:        
@@ -275,9 +277,10 @@ class TestProducer(threading.Thread):
     '''
     Producer thread. Can be called with the following
     characteristics:
-        o Send a msg once
-        o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
-        o Send continuous stream of messages at given interval till stop() is called
+    
+        * Send a msg once
+        * Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
+        * Send continuous stream of messages at given interval till stop() is called
         
     Message have content msg_n, where n is a rising integer.  
     '''

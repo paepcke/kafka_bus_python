@@ -15,11 +15,13 @@ class EchoServer(threading.Thread):
     '''
     Producer thread. Can be called with the following
     characteristics:
-        o Send a msg once
-        o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
-        o Send continuous stream of messages at given interval till stop() is called
+
+        * Send a msg once
+        * Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
+        * Send continuous stream of messages at given interval till stop() is called
         
-    Message have content msg_n, where n is a rising integer.  
+    Message have content msg_n, where n is a rising integer.
+    
     '''
     
     ECHO_TOPIC_NAME = 'echo'

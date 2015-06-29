@@ -65,9 +65,12 @@
 <p>Producer thread. Can be called with the following
 characteristics:</p>
 <blockquote>
-<div>o Send a msg once
-o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
-o Send continuous stream of messages at given interval till stop() is called</div></blockquote>
+<div><ul class="simple">
+<li>Send a msg once</li>
+<li>Before sending any (one or cyclically) more msgs only after method setTrigger() was called.</li>
+<li>Send continuous stream of messages at given interval till stop() is called</li>
+</ul>
+</div></blockquote>
 <p>Message have content msg_n, where n is a rising integer.</p>
 <dl class="attribute">
 <dt id="kafka_bus_python.test.echo_service.EchoServer.ECHO_TOPIC_NAME">
@@ -108,8 +111,8 @@ o Send continuous stream of messages at given interval till stop() is called</di
 <dl class="method">
 <dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.assertMsgContentReasonable">
 <tt class="descname">assertMsgContentReasonable</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.assertMsgContentReasonable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.assertMsgContentReasonable" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks that a recently received msg has
-topic self.testTopic, that the payload starts with <a href="#id1"><span class="problematic" id="id2">msg_</span></a>,
+<dd><p>Checks that a recently received message has
+topic self.testTopic, that the payload starts with msg,
 and that offset info is an int.</p>
 </dd></dl>
 
@@ -126,10 +129,12 @@ return False</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeToWait</strong> (<em>float</em>) &#8211; how many seconds maximally to wait till 
 concluding that msg won&#8217;t arrive</td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">boolean indicating whether or not a msg was received within 5sec</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
 </tbody>
 </table>
-<p>:return boolean indicating whether or not a msg was received within 5sec
-:rtype: boolean</p>
 </dd></dl>
 
 <dl class="method">
@@ -186,9 +191,12 @@ concluding that msg won&#8217;t arrive</td>
 <p>Producer thread. Can be called with the following
 characteristics:</p>
 <blockquote>
-<div>o Send a msg once
-o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
-o Send continuous stream of messages at given interval till stop() is called</div></blockquote>
+<div><ul class="simple">
+<li>Send a msg once</li>
+<li>Before sending any (one or cyclically) more msgs only after method setTrigger() was called.</li>
+<li>Send continuous stream of messages at given interval till stop() is called</li>
+</ul>
+</div></blockquote>
 <p>Message have content msg_n, where n is a rising integer.</p>
 <dl class="method">
 <dt id="kafka_bus_python.test.test_kafka_bus.TestProducer.mostRecentMsgNum">

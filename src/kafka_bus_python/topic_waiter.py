@@ -11,7 +11,7 @@ from kafka.consumer.kafka import KafkaConsumer
 from kafka_bus_exceptions import KafkaServerNotFound
 
 
-class TopicWaiter(threading.Thread):
+class _TopicWaiter(threading.Thread):
     '''
     classdocs
     '''
