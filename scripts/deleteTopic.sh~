@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Delete given topic from Kafka.
+
+if [[ $# != 1 ]]
+then
+    echo "Usage: deleteTopic.sh <topicName>"
+    exit -1
+fi
+
+cd $KAFKA_ROOT
+bin/kafka-topics.sh --zookeeper localhost:2181/ --delete --topic $1
