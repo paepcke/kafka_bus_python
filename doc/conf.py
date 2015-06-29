@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# kafka_bus_python documentation build configuration file, created by
-# sphinx-quickstart on Mon Jun  1 15:50:20 2015.
+# Schoolbus-Kafka-Python documentation build configuration file, created by
+# sphinx-quickstart on Mon Jun 29 07:56:14 2015.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -18,7 +18,12 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 # ANDREAS
-sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath('../src/'))
+sys.path.insert(1, os.getenv('HOME') + '/.virtualenvs/kafka_bus_python/lib/python2.7/site-packages/kafka_python-0.9.3-py2.7.egg')
+
+#*************
+print(sys.path)
+#*************
 # END Andreas
 
 # -- General configuration -----------------------------------------------------
@@ -28,7 +33,7 @@ sys.path.insert(0, os.path.abspath('../src'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -43,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'kafka_bus_python'
+project = u'Schoolbus-Kafka-Python'
 copyright = u'2015, Andreas Paepcke'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -167,7 +172,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'kafka_bus_pythondoc'
+htmlhelp_basename = 'Schoolbus-Kafka-Pythondoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -186,7 +191,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'kafka_bus_python.tex', u'kafka\\_bus\\_python Documentation',
+  ('index', 'Schoolbus-Kafka-Python.tex', u'Schoolbus-Kafka-Python Documentation',
    u'Andreas Paepcke', 'manual'),
 ]
 
@@ -216,7 +221,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'kafka_bus_python', u'kafka_bus_python Documentation',
+    ('index', 'schoolbus-kafka-python', u'Schoolbus-Kafka-Python Documentation',
      [u'Andreas Paepcke'], 1)
 ]
 
@@ -230,8 +235,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'kafka_bus_python', u'kafka_bus_python Documentation',
-   u'Andreas Paepcke', 'kafka_bus_python', 'One line description of project.',
+  ('index', 'Schoolbus-Kafka-Python', u'Schoolbus-Kafka-Python Documentation',
+   u'Andreas Paepcke', 'Schoolbus-Kafka-Python', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -245,5 +250,44 @@ texinfo_documents = [
 #texinfo_show_urls = 'footnote'
 
 
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+# -- Options for Epub output ---------------------------------------------------
+
+# Bibliographic Dublin Core info.
+epub_title = u'Schoolbus-Kafka-Python'
+epub_author = u'Andreas Paepcke'
+epub_publisher = u'Andreas Paepcke'
+epub_copyright = u'2015, Andreas Paepcke'
+
+# The language of the text. It defaults to the language option
+# or en if the language is not set.
+#epub_language = ''
+
+# The scheme of the identifier. Typical schemes are ISBN or URL.
+#epub_scheme = ''
+
+# The unique identifier of the text. This can be a ISBN number
+# or the project homepage.
+#epub_identifier = ''
+
+# A unique identification for the text.
+#epub_uid = ''
+
+# A tuple containing the cover image and cover page html template filenames.
+#epub_cover = ()
+
+# HTML files that should be inserted before the pages created by sphinx.
+# The format is a list of tuples containing the path and title.
+#epub_pre_files = []
+
+# HTML files shat should be inserted after the pages created by sphinx.
+# The format is a list of tuples containing the path and title.
+#epub_post_files = []
+
+# A list of files that should not be packed into the epub file.
+#epub_exclude_files = []
+
+# The depth of the table of contents in toc.ncx.
+#epub_tocdepth = 3
+
+# Allow duplicate toc entries.
+#epub_tocdup = True

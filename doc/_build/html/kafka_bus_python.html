@@ -1,0 +1,762 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kafka_bus_python Package &mdash; Schoolbus-Kafka-Python 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Schoolbus-Kafka-Python 0.1 documentation" href="index.html" />
+    <link rel="next" title="test Package" href="kafka_bus_python.test.html" />
+    <link rel="prev" title="conf Module" href="conf.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kafka_bus_python.test.html" title="test Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="conf.html" title="conf Module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Schoolbus-Kafka-Python 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="kafka-bus-python-package">
+<h1>kafka_bus_python Package<a class="headerlink" href="#kafka-bus-python-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-kafka_bus_python.bus_message">
+<span id="bus-message-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">bus_message</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.bus_message" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 19, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="kafka_bus_python.bus_message.BusMessage">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.bus_message.</tt><tt class="descname">BusMessage</tt><big>(</big><em>pythonStruct</em>, <em>topicName=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/bus_message.html#BusMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.bus_message.BusMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>While messages can be passed around within a module as a JSON string,
+this class provides an alternative. Messages can be encapsulated
+in an instance of this class while in use within a bus module.
+The instance ensures that text is in UTF-8. More conveniences
+could/should be added to this class.</p>
+<dl class="method">
+<dt id="kafka_bus_python.bus_message.BusMessage.content">
+<tt class="descname">content</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/bus_message.html#BusMessage.content"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.bus_message.BusMessage.content" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve current message content.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">current UTF-8 encoded message content.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">String</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.bus_message.BusMessage.rawContent">
+<tt class="descname">rawContent</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/bus_message.html#BusMessage.rawContent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.bus_message.BusMessage.rawContent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Python data structure that will in flattened form make up the
+message content.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">unflattened Python structure</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">&lt;any&gt;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.bus_message.BusMessage.setContent">
+<tt class="descname">setContent</tt><big>(</big><em>pythonStruct</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/bus_message.html#BusMessage.setContent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.bus_message.BusMessage.setContent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change message content.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pythonStruct</strong> (<em>&lt;any&gt;</em>) &#8211; new message content</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.bus_message.BusMessage.topicName">
+<tt class="descname">topicName</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/bus_message.html#BusMessage.topicName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.bus_message.BusMessage.topicName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the topic name associated with this message instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">topic name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">String</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kafka_bus_python.example_consumer">
+<span id="example-consumer-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">example_consumer</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.example_consumer" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 22, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="kafka_bus_python.example_consumer.BusModuleConsumer">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.example_consumer.</tt><tt class="descname">BusModuleConsumer</tt><big>(</big><em>topicName=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/example_consumer.html#BusModuleConsumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.example_consumer.BusModuleConsumer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Example for a bus module that subscribes to a 
+topic, and then echoes all messages to the screen.</p>
+<dl class="attribute">
+<dt id="kafka_bus_python.example_consumer.BusModuleConsumer.DEFAULT_TOPIC">
+<tt class="descname">DEFAULT_TOPIC</tt><em class="property"> = 'example_use'</em><a class="headerlink" href="#kafka_bus_python.example_consumer.BusModuleConsumer.DEFAULT_TOPIC" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.example_consumer.BusModuleConsumer.printMessage">
+<tt class="descname">printMessage</tt><big>(</big><em>topicName</em>, <em>msgText</em>, <em>msgOffset</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/example_consumer.html#BusModuleConsumer.printMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.example_consumer.BusModuleConsumer.printMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method is called whenever a message in topic
+self.topicName is published by anyone on the bus.
+It just prints the message topic and content.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>topicName</strong> (<em>string</em>) &#8211; name of topic to which the arriving msg belongs</li>
+<li><strong>msgText</strong> (<em>string</em>) &#8211; text part of the message. Could be JSON, or anything else.</li>
+<li><strong>msgOffset</strong> (<em>int</em>) &#8211; position of message in the topic&#8217;s message history</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kafka_bus_python.example_producer">
+<span id="example-producer-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">example_producer</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.example_producer" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 22, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="kafka_bus_python.example_producer.BusModuleProducer">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.example_producer.</tt><tt class="descname">BusModuleProducer</tt><a class="reference internal" href="_modules/kafka_bus_python/example_producer.html#BusModuleProducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.example_producer.BusModuleProducer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Example for a bus module that publishes messages
+to topic &#8216;example_use&#8217;.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-kafka_bus_python.kafka_bus">
+<span id="kafka-bus-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">kafka_bus</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.kafka_bus" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 19, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.kafka_bus.</tt><tt class="descname">BusAdapter</tt><big>(</big><em>kafkaHost=None</em>, <em>kafkaPort=None</em>, <em>loggingLevel=10</em>, <em>logFile=None</em>, <em>kafkaGroupId='school_bus'</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The BusAdapter class is intended to be imported to bus modules.
+Instances of this class provide the software bus illusion over
+Kafka. Public methods are:</p>
+<blockquote>
+<div><ul class="simple">
+<li>publish()</li>
+<li>waitForMessage()</li>
+<li>subscribeToTopic()</li>
+<li>unSubscribeFromTopic()</li>
+<li>addTopicListener()</li>
+<li>removeTopicListener()</li>
+<li>mySubscriptions()</li>
+<li>returnError()</li>
+<li>close()</li>
+</ul>
+</div></blockquote>
+<p>Clients of this class may install multiple listeners
+for any given topic. The publish() method may be used asynchronously,
+just to send a message to subscribing modules on the bus, or
+synchronously like a remote procedure call.</p>
+<p>The BusAdapter wraps payloads into a JSON structure
+as follows:</p>
+<div class="highlight-python"><pre>'id'     : &lt;RFC 4122 UUID Version 4&gt;   # e.g. 'b0f4259e-3d01-44bd-9eb3-25981c2dc643'
+'type'   : {req | resp}
+'status' : { OK | ERROR }
+'time'   : &lt;ISO 8601&gt;                  # e.g. '2015-05-31T17:13:41.957350'
+'content': &lt;text&gt;</pre>
+</div>
+<p>It is the responsibility of listener functions to 
+strip this header away, if desired. For an example
+see echo_service.EchoServer&#8217;s echoRequestDelivery()
+method.</p>
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.addTopicListener">
+<tt class="descname">addTopicListener</tt><big>(</big><em>topicName</em>, <em>deliveryCallback</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.addTopicListener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.addTopicListener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a listener function for a topic for which a
+subscription already exists. Parameter deliverCallback
+must be a function accepting parameters: topicName, rawResult, msgOffset
+It is an error to call the method without first
+having subscribed to the topic.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>topicName</strong> (<em>String</em>) &#8211; name of topic to add</li>
+<li><strong>deliveryCallback</strong> (<em>&lt;function(topicName, rawResult, msgOffset)</em>) &#8211; function to call when message to this topic arrives</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises NameError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first last">if caller has not previously subscribed to topicName.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cleanup. All threads are stopped. Kafka
+connection is closed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.logDebug">
+<tt class="descname">logDebug</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.logDebug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.logDebug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Locally log a debug message using the Python logging facility.
+The _logger name is &#8216;SchoolBusLog&#8217;. Change format or _logger
+name by modifying _setupLogging().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> (<em>String</em>) &#8211; message to log</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.logError">
+<tt class="descname">logError</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.logError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.logError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Locally log an error message using the Python logging facility.
+The _logger name is &#8216;SchoolBusLog&#8217;. Change format or _logger
+name by modifying _setupLogging().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> (<em>String</em>) &#8211; message to log</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.logInfo">
+<tt class="descname">logInfo</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.logInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.logInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Locally log an info message using the Python logging facility.
+The _logger name is &#8216;SchoolBusLog&#8217;. Change format or _logger
+name by modifying _setupLogging().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> (<em>String</em>) &#8211; message to log</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.logWarn">
+<tt class="descname">logWarn</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.logWarn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.logWarn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loccally log a warning message using the Python logging facility.
+The _logger name is &#8216;SchoolBusLog&#8217;. Change format or _logger
+name by modifying _setupLogging().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> (<em>String</em>) &#8211; message to log</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.mySubscriptions">
+<tt class="descname">mySubscriptions</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.mySubscriptions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.mySubscriptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of topic names to which this bus adapter is subscribed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">List of topics to which caller is subscribed</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">[String]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.publish">
+<tt class="descname">publish</tt><big>(</big><em>busMessage</em>, <em>topicName=None</em>, <em>sync=False</em>, <em>msgId=None</em>, <em>msgType='req'</em>, <em>timeout=None</em>, <em>auth=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.publish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Publish either a string or a BusMessage object. If busMessage
+is a string, then the caller is responsible for ensuring that
+the string is UTF-8, and a topic name must be provided.</p>
+<p>If busMessage is a BusMessage object, then that object contains
+all the required information. In this case, parameter topicName
+overrides a topic name that might be stored in the BusMessage.</p>
+<p>Messages are wrapped in a JSON structure that provides
+&#8216;id&#8217;, &#8216;type&#8217;, &#8216;time&#8217;, and &#8216;content&#8217; fields. The &#8216;content&#8217; field
+will contain the message payload.</p>
+<p>Two ways of using this method: asynchronously, and synchronously.
+In asynchronous invocation the passed-in message is published, and
+this method returns immediately. For this type of invocation just
+provide argument busMessage, and possibly topicName, if busMessage
+is a string.</p>
+<p>Synchronous invocation is just like a remote procedure call.
+In synchronous invocation the passed-in message is published, and 
+this method will wait for a return message that carries the same
+message ID, and is of message type &#8216;resp&#8217;. This method then
+returns the <strong>content</strong> of the returned message; the surrounding
+wrapper (time/msgId/msgType...) is stripped.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>busMessage</strong> (<em>{string | BusMessage}</em>) &#8211; string or BusMessage to publish</li>
+<li><strong>topicName</strong> (<em>{string | None}</em>) &#8211; name of topic to publish to. If None, then 
+parameter must be a BusMessage object that contains an
+associated topic name.</li>
+<li><strong>sync</strong> (<em>boolean</em>) &#8211; if True, call will not return till answer received,
+or timeout (if given) has expired).</li>
+<li><strong>msgId</strong> (<em>string</em>) &#8211; if this publish() call is a response to a prior request,
+the request message&#8217;s ID must be the id of the response. In that
+case the caller can use this parameter to provide the ID. If
+None, a new message ID is generated.</li>
+<li><strong>msgType</strong> &#8211; value for the message type field of the outgoing message.
+Usually this is &#8216;req&#8217;, but when calling publish() to return a result
+to a prior request, then set this argument to &#8216;resp&#8217;.</li>
+<li><strong>timeout</strong> (<em>float</em>) &#8211; timeout after which synchronous call should time out.
+if sync is False, the timeout parameter is ignored.</li>
+<li><strong>auth</strong> (<em>not yet known</em>) &#8211; reserved for later authentication mechanism.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">value is only defined for synchronous invocation.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">string</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ValueError</strong> &#8211; if targeted topic name is not provided in a msg object,
+or explicitly in the topicName parameter.</li>
+<li><strong>ValueError</strong> &#8211; if illegal message type is passed in.</li>
+<li><strong>BadInformation</strong> &#8211; if Kafka does not recognize the provided topic
+<strong>and</strong> Kafka is not configured to create topics on the fly.</li>
+<li><strong>SyncCallTimedOut</strong> &#8211; if no response is received to a synchronous call
+within the provided timeout period.</li>
+<li><strong>SyncCallRuntimeError</strong> &#8211; if a message received in response to a 
+synchronous call cannot be parsed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.removeTopicListener">
+<tt class="descname">removeTopicListener</tt><big>(</big><em>topicName</em>, <em>deliveryCallback</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.removeTopicListener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.removeTopicListener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a topic listener function from a topic. It is
+a no-op to call this method with a topic that has not
+been subscribed to, or with a deliveryCallback function that
+was never added to the topic.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>topicName</strong> &#8211; </li>
+<li><strong>deliveryCallback</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.returnError">
+<tt class="descname">returnError</tt><big>(</big><em>req_key</em>, <em>topicName</em>, <em>errMsg</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.returnError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.returnError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convencience method when handling an incoming message.
+Returns a message that is marked as an error return.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>req_key</strong> (<em>String</em>) &#8211; key of the incoming message; it will be used in the return message as well.</li>
+<li><strong>topicName</strong> (<em>String</em>) &#8211; name of topic to use in the return message</li>
+<li><strong>errMsg</strong> (<em>String</em>) &#8211; error message to include in the return message</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.subscribeToTopic">
+<tt class="descname">subscribeToTopic</tt><big>(</big><em>topicName</em>, <em>deliveryCallback=None</em>, <em>kafkaLiveCheckTimeout=30</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.subscribeToTopic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.subscribeToTopic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fork a new thread that keeps waiting for any messages
+on the topic of the given name. Stop listening for the topic
+by calling unsubscribeFromTropic().</p>
+<p>For convenience, a deliveryCallback function may be passed,
+saving a subsequent call to addTopicListener(). See addTopicListener()
+for details.</p>
+<p>If deliveryCallback is absent or None, then method _deliverResult()
+in this class will be used. That method is intended to be a 
+placeholder with no side effects.</p>
+<p>It is a no-op to call this method multiple times for the
+same topic.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>topicName</strong> (<em>string</em>) &#8211; official name of topic to listen for.</li>
+<li><strong>deliveryCallback</strong> (<em>function</em>) &#8211; a function that takes two args: a topic
+name, and a topic content string.</li>
+<li><strong>kafkaLiveCheckTimeout</strong> (<em>float</em>) &#8211; timeout in (fractional) seconds to
+wait when checking for a live Kafka server being available.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises KafkaServerNotFound:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first last">when no Kafka server responds</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.unsubscribeFromTopic">
+<tt class="descname">unsubscribeFromTopic</tt><big>(</big><em>topicName</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.unsubscribeFromTopic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.unsubscribeFromTopic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unsubscribes from topic. Stops the topic&#8217;s thread,
+and removes it from bookkeeping so that the Thread object
+will be garbage collected. Same for the Event object
+used by the thread to signal message arrival.</p>
+<p>Calling this method for a topic that is already
+unsubscribed is a no-op.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>topicName</strong> (<em>string</em>) &#8211; name of topic to subscribe from</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.kafka_bus.BusAdapter.waitForMessage">
+<tt class="descname">waitForMessage</tt><big>(</big><em>topicName</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus.html#BusAdapter.waitForMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus.BusAdapter.waitForMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Block till a message on the given topic arrives. It is
+an error to call this method on a topic to which the
+caller has not previously subscribed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>topicName</strong> &#8211; </li>
+<li><strong>timeout</strong> (<em>float</em>) &#8211; seconds (or fractions of second) to wait.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">True if a message arrived in time, else returnes False</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">boolean</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises NameError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first last">on attempt to wait for a topic for which no subscription exists.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kafka_bus_python.kafka_bus_exceptions">
+<span id="kafka-bus-exceptions-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">kafka_bus_exceptions</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.kafka_bus_exceptions" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 31, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="exception">
+<dt id="kafka_bus_python.kafka_bus_exceptions.BadInformation">
+<em class="property">exception </em><tt class="descclassname">kafka_bus_python.kafka_bus_exceptions.</tt><tt class="descname">BadInformation</tt><big>(</big><em>msg</em>, <em>errorDetail=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus_exceptions.html#BadInformation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus_exceptions.BadInformation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kafka_bus_python.kafka_bus_exceptions.KafkaBusException" title="kafka_bus_python.kafka_bus_exceptions.KafkaBusException"><tt class="xref py py-class docutils literal"><span class="pre">kafka_bus_python.kafka_bus_exceptions.KafkaBusException</span></tt></a></p>
+<p>A bus message does not contain syntactically
+or semantically incorrect information
+Instance variable &#8216;errorDetail&#8217; contains details</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="kafka_bus_python.kafka_bus_exceptions.InsufficientInformation">
+<em class="property">exception </em><tt class="descclassname">kafka_bus_python.kafka_bus_exceptions.</tt><tt class="descname">InsufficientInformation</tt><big>(</big><em>msg</em>, <em>errorDetail=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus_exceptions.html#InsufficientInformation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus_exceptions.InsufficientInformation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kafka_bus_python.kafka_bus_exceptions.KafkaBusException" title="kafka_bus_python.kafka_bus_exceptions.KafkaBusException"><tt class="xref py py-class docutils literal"><span class="pre">kafka_bus_python.kafka_bus_exceptions.KafkaBusException</span></tt></a></p>
+<p>A bus message does not contain all the information
+required by the bus protocol, or a bus module.
+Instance variable &#8216;errorDetail&#8217; contains the 
+missing field name.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="kafka_bus_python.kafka_bus_exceptions.KafkaBusException">
+<em class="property">exception </em><tt class="descclassname">kafka_bus_python.kafka_bus_exceptions.</tt><tt class="descname">KafkaBusException</tt><big>(</big><em>msg</em>, <em>errorDetail=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus_exceptions.html#KafkaBusException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus_exceptions.KafkaBusException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>classdocs</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="kafka_bus_python.kafka_bus_exceptions.KafkaServerNotFound">
+<em class="property">exception </em><tt class="descclassname">kafka_bus_python.kafka_bus_exceptions.</tt><tt class="descname">KafkaServerNotFound</tt><big>(</big><em>msg</em>, <em>errorDetail=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus_exceptions.html#KafkaServerNotFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus_exceptions.KafkaServerNotFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kafka_bus_python.kafka_bus_exceptions.KafkaBusException" title="kafka_bus_python.kafka_bus_exceptions.KafkaBusException"><tt class="xref py py-class docutils literal"><span class="pre">kafka_bus_python.kafka_bus_exceptions.KafkaBusException</span></tt></a></p>
+<p>No Kafka server was found</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="kafka_bus_python.kafka_bus_exceptions.SyncCallRuntimeError">
+<em class="property">exception </em><tt class="descclassname">kafka_bus_python.kafka_bus_exceptions.</tt><tt class="descname">SyncCallRuntimeError</tt><big>(</big><em>msg</em>, <em>errorDetail=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus_exceptions.html#SyncCallRuntimeError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus_exceptions.SyncCallRuntimeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kafka_bus_python.kafka_bus_exceptions.KafkaBusException" title="kafka_bus_python.kafka_bus_exceptions.KafkaBusException"><tt class="xref py py-class docutils literal"><span class="pre">kafka_bus_python.kafka_bus_exceptions.KafkaBusException</span></tt></a></p>
+<p>Error while processing an incoming result to
+a synchronous call.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="kafka_bus_python.kafka_bus_exceptions.SyncCallTimedOut">
+<em class="property">exception </em><tt class="descclassname">kafka_bus_python.kafka_bus_exceptions.</tt><tt class="descname">SyncCallTimedOut</tt><big>(</big><em>msg</em>, <em>errorDetail=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/kafka_bus_exceptions.html#SyncCallTimedOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.kafka_bus_exceptions.SyncCallTimedOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kafka_bus_python.kafka_bus_exceptions.KafkaBusException" title="kafka_bus_python.kafka_bus_exceptions.KafkaBusException"><tt class="xref py py-class docutils literal"><span class="pre">kafka_bus_python.kafka_bus_exceptions.KafkaBusException</span></tt></a></p>
+<p>A synchronous call to a bus module did not
+return a result within a given timeout.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-kafka_bus_python.kafka_bus_utils">
+<span id="kafka-bus-utils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">kafka_bus_utils</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.kafka_bus_utils" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 31, 2015</p>
+<p>&#64;author: paepcke</p>
+</div>
+<div class="section" id="module-kafka_bus_python.topic_waiter">
+<span id="topic-waiter-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">topic_waiter</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.topic_waiter" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 19, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="kafka_bus_python.topic_waiter.TopicWaiter">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.topic_waiter.</tt><tt class="descname">TopicWaiter</tt><big>(</big><em>topicName</em>, <em>busAdapter</em>, <em>kafkaGroupId</em>, <em>deliveryCallback=None</em>, <em>eventObj=None</em>, <em>kafkaLiveCheckTimeout=30</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/topic_waiter.html#TopicWaiter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.topic_waiter.TopicWaiter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></p>
+<p>classdocs</p>
+<dl class="method">
+<dt id="kafka_bus_python.topic_waiter.TopicWaiter.addListener">
+<tt class="descname">addListener</tt><big>(</big><em>callback</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/topic_waiter.html#TopicWaiter.addListener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.topic_waiter.TopicWaiter.addListener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a listener who will be notified with any
+message that arrives on the topic. See <tt class="xref py py-func docutils literal"><span class="pre">addTopicListener()</span></tt> 
+in <tt class="xref py py-class docutils literal"><span class="pre">BusAdapter</span></tt> for details on parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>function</em>) &#8211; function with two args: a topic name, and
+a string that is the message content.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kafka_bus_python.topic_waiter.TopicWaiter.fetch_message_max_bytes">
+<tt class="descname">fetch_message_max_bytes</tt><em class="property"> = 1073741824</em><a class="headerlink" href="#kafka_bus_python.topic_waiter.TopicWaiter.fetch_message_max_bytes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.topic_waiter.TopicWaiter.listeners">
+<tt class="descname">listeners</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/topic_waiter.html#TopicWaiter.listeners"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.topic_waiter.TopicWaiter.listeners" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all the callback functions that will be called
+each time a message arrives.</p>
+<p>:returns list of registered callback functions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.topic_waiter.TopicWaiter.removeListener">
+<tt class="descname">removeListener</tt><big>(</big><em>callback</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/topic_waiter.html#TopicWaiter.removeListener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.topic_waiter.TopicWaiter.removeListener" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the specified function from the callbacks to
+notify upon message arrivals. It is a no-op to
+remove a non-existing listener.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>callback</strong> (<em>Function</em>) &#8211; callback function to remove.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.topic_waiter.TopicWaiter.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/topic_waiter.html#TopicWaiter.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.topic_waiter.TopicWaiter.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hang on Kafka message arrival. Whenever a message arrives,
+set() the <tt class="xref py py-class docutils literal"><span class="pre">threading.Event</span></tt> object, if one was provided
+to the __init__() method. Then all all the registered delivery
+functions in turn.</p>
+<p>Periodically check whether self.done is True, indicating that
+thread should stop.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.topic_waiter.TopicWaiter.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/topic_waiter.html#TopicWaiter.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.topic_waiter.TopicWaiter.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="kafka_bus_python.test.html">test Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kafka_bus_python.test.html#module-kafka_bus_python.test.echo_service"><tt class="docutils literal"><span class="pre">echo_service</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kafka_bus_python.test.html#module-kafka_bus_python.test.test_kafka_bus"><tt class="docutils literal"><span class="pre">test_kafka_bus</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">kafka_bus_python Package</a><ul>
+<li><a class="reference internal" href="#module-kafka_bus_python.bus_message"><tt class="docutils literal"><span class="pre">bus_message</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-kafka_bus_python.example_consumer"><tt class="docutils literal"><span class="pre">example_consumer</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-kafka_bus_python.example_producer"><tt class="docutils literal"><span class="pre">example_producer</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-kafka_bus_python.kafka_bus"><tt class="docutils literal"><span class="pre">kafka_bus</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-kafka_bus_python.kafka_bus_exceptions"><tt class="docutils literal"><span class="pre">kafka_bus_exceptions</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-kafka_bus_python.kafka_bus_utils"><tt class="docutils literal"><span class="pre">kafka_bus_utils</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-kafka_bus_python.topic_waiter"><tt class="docutils literal"><span class="pre">topic_waiter</span></tt> Module</a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="conf.html"
+                        title="previous chapter">conf Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="kafka_bus_python.test.html"
+                        title="next chapter">test Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/kafka_bus_python.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kafka_bus_python.test.html" title="test Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="conf.html" title="conf Module"
+             >previous</a> |</li>
+        <li><a href="index.html">Schoolbus-Kafka-Python 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Andreas Paepcke.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

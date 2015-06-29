@@ -10,14 +10,14 @@ import json
 
 #----------------------------------- Extension to json.JSONEncoder -------------------
 
-class JSONEncoderBusExtended(json.JSONEncoder):
+class _JSONEncoderBusExtended(json.JSONEncoder):
     
     # Partial function to use by clients of this library
     # when specifying the 'default' keyword value to
     # their json.dump(), and json.dumps() calls.
     # This value will be filled in a top-level
     # statement below, outside the class def, b/c
-    # the JSONEncoderBusExtended class isn't defined
+    # the _JSONEncoderBusExtended class isn't defined
     # yet at this point: 
     jsonEncodeMethod = None
 
@@ -36,9 +36,9 @@ class JSONEncoderBusExtended(json.JSONEncoder):
         
         :param pythonStructure: structure to convert
         :type pythonStructure: any
-        :return JSON
-        :rtype string
-        :raise TypeError if structure contains JSONizable elements.
+        :return: JSON
+        :rtype: string
+        :raises TypeError: if structure contains JSONizable elements.
         '''
         io = cStringIO.StringIO()
         # JSON-encode the given Python structure,
@@ -51,4 +51,4 @@ class JSONEncoderBusExtended(json.JSONEncoder):
         return val
 
 
-JSONEncoderBusExtended.jsonEncodeMethod = functools.partial(JSONEncoderBusExtended.default)
+_JSONEncoderBusExtended.jsonEncodeMethod = functools.partial(_JSONEncoderBusExtended.default)

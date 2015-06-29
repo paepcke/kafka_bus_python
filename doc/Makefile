@@ -77,17 +77,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/kafka_bus_python.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/Schoolbus-Kafka-Python.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/kafka_bus_python.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/Schoolbus-Kafka-Python.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/kafka_bus_python"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/kafka_bus_python"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/Schoolbus-Kafka-Python"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/Schoolbus-Kafka-Python"
 	@echo "# devhelp"
 
 epub:

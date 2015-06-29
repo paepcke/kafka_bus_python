@@ -1,0 +1,447 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kafka_bus_python.test.test_kafka_bus &mdash; Schoolbus-Kafka-Python 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Schoolbus-Kafka-Python 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Schoolbus-Kafka-Python 0.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kafka_bus_python.test.test_kafka_bus</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Created on May 20, 2015</span>
+
+<span class="sd">@author: paepcke</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">from</span> <span class="nn">kafka_bus_python.kafka_bus</span> <span class="kn">import</span> <span class="n">BusAdapter</span>
+<span class="kn">from</span> <span class="nn">kafka_bus_python.test.echo_service</span> <span class="kn">import</span> <span class="n">EchoServer</span>
+
+
+<span class="n">TEST_ALL</span> <span class="o">=</span> <span class="bp">False</span>
+
+<div class="viewcode-block" id="TestKafkaBus"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus">[docs]</a><span class="k">class</span> <span class="nc">TestKafkaBus</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+    
+<div class="viewcode-block" id="TestKafkaBus.setUp"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">BusAdapter</span><span class="p">()</span>
+        
+        <span class="c">#Elog = logging.getLogger(&quot;kafka&quot;)</span>
+        <span class="c">#log.setLevel(logging.DEBUG)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryFunc</span>     <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deliverMessage</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryFunc</span>  <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">altDeliverMessage</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span>    <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryEvent</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span> <span class="o">=</span> <span class="s">&#39;test1&#39;</span>
+        </div>
+<div class="viewcode-block" id="TestKafkaBus.tearDown"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">unsubscribeFromTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># If a test producer was running, stop it:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Could not kill testProducer.&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryEvent</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="c">#--------------------------------------------  Test Methods ------------------------</span>
+</div>
+    <span class="nd">@unittest.skipIf</span><span class="p">(</span><span class="ow">not</span> <span class="n">TEST_ALL</span><span class="p">,</span> <span class="s">&quot;Temporarily disabled&quot;</span><span class="p">)</span>    
+<div class="viewcode-block" id="TestKafkaBus.testSubscription"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testSubscription">[docs]</a>    <span class="k">def</span> <span class="nf">testSubscription</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">subscribeToTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">)</span>
+
+        <span class="c"># Check that BusAdapter has properly remembered</span>
+        <span class="c"># the thread that resulted from above subscription:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">listenerThreads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">]</span><span class="o">.</span><span class="n">listeners</span><span class="p">(),</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">resultCallback</span><span class="p">])</span>
+        
+        <span class="c"># One topic event:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">topicEvents</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c"># Unsubscribing a topic that we didn&#39;t subscribe</span>
+        <span class="c"># to should be harmless:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">unsubscribeFromTopic</span><span class="p">(</span><span class="s">&#39;badTopic&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">listenerThreads</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">]</span><span class="o">.</span><span class="n">listeners</span><span class="p">(),</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">resultCallback</span><span class="p">])</span>
+        
+        <span class="c"># Seriously unsubscribe:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">unsubscribeFromTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">listenerThreads</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        </div>
+    <span class="nd">@unittest.skipIf</span><span class="p">(</span><span class="ow">not</span> <span class="n">TEST_ALL</span><span class="p">,</span> <span class="s">&quot;Temporarily disabled&quot;</span><span class="p">)</span>    
+<div class="viewcode-block" id="TestKafkaBus.testWaitForMessage"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testWaitForMessage">[docs]</a>    <span class="k">def</span> <span class="nf">testWaitForMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">subscribeToTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">deliveryCallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryFunc</span><span class="p">,</span> <span class="n">kafkaLiveCheckTimeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="c"># Create a producer that immediately sends a single message</span>
+        <span class="c"># to topic self.testTopic, and then goes away:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span> <span class="o">=</span> <span class="n">TestProducer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">)</span>
+        
+        <span class="c"># Make sure msg is received:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">awaitExpectedMsg</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertMsgContentReasonable</span><span class="p">()</span>        
+        </div>
+    <span class="nd">@unittest.skipIf</span><span class="p">(</span><span class="ow">not</span> <span class="n">TEST_ALL</span><span class="p">,</span> <span class="s">&quot;Temporarily disabled&quot;</span><span class="p">)</span>    
+<div class="viewcode-block" id="TestKafkaBus.testUnsubscribe"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testUnsubscribe">[docs]</a>    <span class="k">def</span> <span class="nf">testUnsubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">subscribeToTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">deliveryCallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryFunc</span><span class="p">)</span>
+        
+        <span class="c"># Ask test producer to fire a msg each time </span>
+        <span class="c"># we call setTrigger():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span> <span class="o">=</span> <span class="n">TestProducer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">waitForTrigger</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">delayBetweenMessages</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c"># Fire first msg:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+        <span class="c"># Make sure msg is received:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">awaitExpectedMsg</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertMsgContentReasonable</span><span class="p">()</span>
+        
+        <span class="c"># Fire second msg:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+        <span class="c"># Make sure second msg is received:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">awaitExpectedMsg</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertMsgContentReasonable</span><span class="p">()</span>
+                
+        <span class="c"># Unsubscribe:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">unsubscribeFromTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">)</span>
+        
+        <span class="c"># Fire third msg:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+        
+        <span class="c"># Make sure second msg is received:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">NameError</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">awaitExpectedMsg</span><span class="p">(</span><span class="n">timeToWait</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</div>
+    <span class="nd">@unittest.skipIf</span><span class="p">(</span><span class="ow">not</span> <span class="n">TEST_ALL</span><span class="p">,</span> <span class="s">&quot;Temporarily disabled&quot;</span><span class="p">)</span>    
+<div class="viewcode-block" id="TestKafkaBus.testRemoveListener"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testRemoveListener">[docs]</a>    <span class="k">def</span> <span class="nf">testRemoveListener</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">subscribeToTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">deliveryCallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryFunc</span><span class="p">)</span>
+        
+        <span class="c"># Ask test producer to fire a msg each time </span>
+        <span class="c"># we call setTrigger():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span> <span class="o">=</span> <span class="n">TestProducer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">waitForTrigger</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">delayBetweenMessages</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c"># Fire first msg:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+        <span class="c"># Make sure msg is received:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">awaitExpectedMsg</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertMsgContentReasonable</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">removeTopicListener</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">deliveryFunc</span><span class="p">)</span>
+        
+        <span class="c"># Make sure second msg is NOT received:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topicName</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rawResult</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msgOffset</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Fire second msg; will be handled</span>
+        <span class="c"># by BusAdapter&#39;s default handler, which does nothing:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="c"># If our delivery msg had been called,</span>
+        <span class="c"># the self.deliveryEvent would now be set:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">isSet</span><span class="p">())</span>
+        
+        <span class="c"># Just to make double sure:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topicName</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawResult</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msgOffset</span><span class="p">)</span>
+        
+        <span class="c"># Re-install the test listener:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">addTopicListener</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">deliveryCallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryFunc</span><span class="p">)</span>
+        
+        <span class="c"># Ensure msg arrives:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="c"># Fire another msg:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">awaitExpectedMsg</span><span class="p">())</span>
+        
+        <span class="c"># Ensure that our test delivery method was called:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">isSet</span><span class="p">())</span>
+        
+        <span class="c"># This time self.deliveryFunc should have been called</span>
+        <span class="c"># and should have set the msg elements:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertMsgContentReasonable</span><span class="p">()</span>
+</div>
+    <span class="nd">@unittest.skipIf</span><span class="p">(</span><span class="ow">not</span> <span class="n">TEST_ALL</span><span class="p">,</span> <span class="s">&quot;Temporarily disabled&quot;</span><span class="p">)</span>    
+<div class="viewcode-block" id="TestKafkaBus.testTwoListeners"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testTwoListeners">[docs]</a>    <span class="k">def</span> <span class="nf">testTwoListeners</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">subscribeToTopic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">deliveryCallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryFunc</span><span class="p">)</span>
+        
+        <span class="c"># Ask test producer to fire a msg each time </span>
+        <span class="c"># we call setTrigger():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span> <span class="o">=</span> <span class="n">TestProducer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">waitForTrigger</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">delayBetweenMessages</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    
+        <span class="c"># Install a second test listener:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">addTopicListener</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="n">deliveryCallback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryFunc</span><span class="p">)</span>
+        
+        <span class="c"># Reset both listener functions&#39; events:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryEvent</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="c"># Fire an event:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testProducer</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+        
+        <span class="c"># Ensure msg arrives:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryEvent</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">isSet</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryEvent</span><span class="o">.</span><span class="n">isSet</span><span class="p">())</span>
+
+    <span class="c">#@unittest.skipIf(not TEST_ALL, &quot;Temporarily disabled&quot;)    </span></div>
+<div class="viewcode-block" id="TestKafkaBus.testSynchronousCall"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testSynchronousCall">[docs]</a>    <span class="k">def</span> <span class="nf">testSynchronousCall</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">subscriptionsOnEntry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">mySubscriptions</span><span class="p">()</span>
+
+        <span class="c"># Start an echo service:</span>
+        <span class="n">echoService</span> <span class="o">=</span> <span class="n">EchoServer</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">echoRes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s">&#39;This is a test&#39;</span><span class="p">,</span> <span class="s">&#39;echo&#39;</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">echoRes</span><span class="p">,</span> <span class="s">&#39;This is a test&#39;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">echoService</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+            <span class="n">echoService</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">echoService</span><span class="o">.</span><span class="n">isAlive</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&quot;Could not kill echo server.&quot;</span><span class="p">)</span>
+            
+            <span class="c"># Now we should only have subscriptions that were</span>
+            <span class="c"># already there on entry to this method:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">subscriptionsOnEntry</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">mySubscriptions</span><span class="p">())</span>
+
+    <span class="c">#--------------------------------------------  Support Methods ------------------------</span>
+
+        </div>
+<div class="viewcode-block" id="TestKafkaBus.awaitExpectedMsg"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.awaitExpectedMsg">[docs]</a>    <span class="k">def</span> <span class="nf">awaitExpectedMsg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeToWait</span><span class="o">=</span><span class="mf">5.0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Wait for a message, and return True if the </span>
+<span class="sd">        msg arrived within less than 5sec. Else</span>
+<span class="sd">        return False</span>
+<span class="sd">    </span>
+<span class="sd">        :param timeToWait: how many seconds maximally to wait till </span>
+<span class="sd">            concluding that msg won&#39;t arrive</span>
+<span class="sd">        :type timeToWait: float</span>
+<span class="sd">        :return boolean indicating whether or not a msg was received within 5sec</span>
+<span class="sd">        :rtype: boolean</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c"># Hang for (at most) 5 seconds. Then a message</span>
+        <span class="c"># should be there:</span>
+        <span class="n">timeBeforeWait</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span><span class="o">.</span><span class="n">waitForMessage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        
+        <span class="n">timeAfterWait</span>  <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="c"># Elapsed time should be less than the 5sec timeout,</span>
+        <span class="c"># i.e. the wait should have released b/c a msg arrived:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">timeAfterWait</span> <span class="o">-</span> <span class="n">timeBeforeWait</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TestKafkaBus.assertMsgContentReasonable"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.assertMsgContentReasonable">[docs]</a>    <span class="k">def</span> <span class="nf">assertMsgContentReasonable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Checks that a recently received msg has</span>
+<span class="sd">        topic self.testTopic, that the payload starts with msg_,</span>
+<span class="sd">        and that offset info is an int.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c"># Make sure msg has reasonable content:        </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topicName</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">testTopic</span><span class="p">)</span>
+        <span class="n">resDict</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawResult</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s">&#39;content&#39;</span> <span class="ow">in</span> <span class="n">resDict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s">&#39;time&#39;</span> <span class="ow">in</span> <span class="n">resDict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s">&#39;type&#39;</span> <span class="ow">in</span> <span class="n">resDict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s">&#39;id&#39;</span> <span class="ow">in</span> <span class="n">resDict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msgOffset</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">)</span>
+        
+        </div>
+<div class="viewcode-block" id="TestKafkaBus.deliverMessage"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.deliverMessage">[docs]</a>    <span class="k">def</span> <span class="nf">deliverMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">rawResult</span><span class="p">,</span> <span class="n">msgOffset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topicName</span> <span class="o">=</span> <span class="n">topicName</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rawResult</span> <span class="o">=</span> <span class="n">rawResult</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msgOffset</span> <span class="o">=</span> <span class="n">msgOffset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveryEvent</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="TestKafkaBus.altDeliverMessage"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.altDeliverMessage">[docs]</a>    <span class="k">def</span> <span class="nf">altDeliverMessage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">rawResult</span><span class="p">,</span> <span class="n">msgOffset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">altDeliveryEvent</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+
+        
+
+<span class="c">#--------------------------------------------  Test Producer for Kafka Msgs ------------------------</span>
+</div></div>
+<div class="viewcode-block" id="TestProducer"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestProducer">[docs]</a><span class="k">class</span> <span class="nc">TestProducer</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Producer thread. Can be called with the following</span>
+<span class="sd">    characteristics:</span>
+<span class="sd">        o Send a msg once</span>
+<span class="sd">        o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.</span>
+<span class="sd">        o Send continuous stream of messages at given interval till stop() is called</span>
+<span class="sd">        </span>
+<span class="sd">    Message have content msg_n, where n is a rising integer.  </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topicName</span><span class="p">,</span> <span class="n">waitForTrigger</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">delayBetweenMessages</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        If delayBetweenMessages is a number in seconds, then a message</span>
+<span class="sd">        will be sent every delayBetweenMessages. Else exactly one msg</span>
+<span class="sd">        is sent. If waitForTrigger is True, then sleep between each </span>
+<span class="sd">        msg send until setTrigger() was called. I.e. each send is triggered</span>
+<span class="sd">        by a new setTrigger() call from the outside.         </span>
+<span class="sd">        </span>
+<span class="sd">        :param topicName: name of topic to publish to</span>
+<span class="sd">        :type topicName: string</span>
+<span class="sd">        :param waitForTrigger: if True, outsider must call setTrigger() each </span>
+<span class="sd">            time a msg is to be sent. </span>
+<span class="sd">        :type waitForTrigger: boolean</span>
+<span class="sd">        :param delayBetweenMessages: interval between sending msgs till stop() is called.</span>
+<span class="sd">            None: only send a single method.</span>
+<span class="sd">            0: keep sending messages as fast as possible. (Not recommended, unless waitForTrigger == True)</span>
+<span class="sd">            n.m: seconds between sends</span>
+<span class="sd">        :type delayBetweenMessages: {None | int | float}</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">topicName</span> <span class="o">=</span> <span class="n">topicName</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waitForTrigger</span> <span class="o">=</span> <span class="n">waitForTrigger</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delayBetweenMessages</span> <span class="o">=</span> <span class="n">delayBetweenMessages</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triggerEvent</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msgNumber</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span>    <span class="o">=</span> <span class="bp">False</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="TestProducer.mostRecentMsgNum"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestProducer.mostRecentMsgNum">[docs]</a>    <span class="k">def</span> <span class="nf">mostRecentMsgNum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msgNumber</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="TestProducer.setTrigger"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestProducer.setTrigger">[docs]</a>    <span class="k">def</span> <span class="nf">setTrigger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triggerEvent</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="TestProducer.stop"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestProducer.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setTrigger</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="TestProducer.run"><a class="viewcode-back" href="../../../kafka_bus_python.test.html#kafka_bus_python.test.test_kafka_bus.TestProducer.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="n">bus</span> <span class="o">=</span> <span class="n">BusAdapter</span><span class="p">()</span>
+        
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">waitForTrigger</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">triggerEvent</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">triggerEvent</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            
+            <span class="c"># Did someone call stop()?    </span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+                <span class="k">return</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">msgNumber</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">bus</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s">&#39;msg_</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">msgNumber</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">topicName</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delayBetweenMessages</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delayBetweenMessages</span><span class="p">)</span>
+                <span class="c"># Did someone call stop()    </span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+                    <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span>
+            </div></div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c">#import sys;sys.argv = [&#39;&#39;, &#39;Test.testName&#39;]</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Schoolbus-Kafka-Python 0.1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Andreas Paepcke.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

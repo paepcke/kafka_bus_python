@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>test Package &mdash; Schoolbus-Kafka-Python 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Schoolbus-Kafka-Python 0.1 documentation" href="index.html" />
+    <link rel="up" title="kafka_bus_python Package" href="kafka_bus_python.html" />
+    <link rel="prev" title="kafka_bus_python Package" href="kafka_bus_python.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kafka_bus_python.html" title="kafka_bus_python Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Schoolbus-Kafka-Python 0.1 documentation</a> &raquo;</li>
+          <li><a href="kafka_bus_python.html" accesskey="U">kafka_bus_python Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="test-package">
+<h1>test Package<a class="headerlink" href="#test-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-kafka_bus_python.test.echo_service">
+<span id="echo-service-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">echo_service</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.test.echo_service" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 22, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="kafka_bus_python.test.echo_service.EchoServer">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.test.echo_service.</tt><tt class="descname">EchoServer</tt><a class="reference internal" href="_modules/kafka_bus_python/test/echo_service.html#EchoServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.echo_service.EchoServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></p>
+<p>Producer thread. Can be called with the following
+characteristics:</p>
+<blockquote>
+<div>o Send a msg once
+o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
+o Send continuous stream of messages at given interval till stop() is called</div></blockquote>
+<p>Message have content msg_n, where n is a rising integer.</p>
+<dl class="attribute">
+<dt id="kafka_bus_python.test.echo_service.EchoServer.ECHO_TOPIC_NAME">
+<tt class="descname">ECHO_TOPIC_NAME</tt><em class="property"> = 'echo'</em><a class="headerlink" href="#kafka_bus_python.test.echo_service.EchoServer.ECHO_TOPIC_NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.echo_service.EchoServer.echoRequestDelivery">
+<tt class="descname">echoRequestDelivery</tt><big>(</big><em>topicName</em>, <em>rawResult</em>, <em>msgOffset</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/echo_service.html#EchoServer.echoRequestDelivery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.echo_service.EchoServer.echoRequestDelivery" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.echo_service.EchoServer.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/echo_service.html#EchoServer.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.echo_service.EchoServer.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.echo_service.EchoServer.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/echo_service.html#EchoServer.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.echo_service.EchoServer.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kafka_bus_python.test.test_kafka_bus">
+<span id="test-kafka-bus-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">test_kafka_bus</span></tt> Module<a class="headerlink" href="#module-kafka_bus_python.test.test_kafka_bus" title="Permalink to this headline">¶</a></h2>
+<p>Created on May 20, 2015</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.test.test_kafka_bus.</tt><tt class="descname">TestKafkaBus</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.altDeliverMessage">
+<tt class="descname">altDeliverMessage</tt><big>(</big><em>topicName</em>, <em>rawResult</em>, <em>msgOffset</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.altDeliverMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.altDeliverMessage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.assertMsgContentReasonable">
+<tt class="descname">assertMsgContentReasonable</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.assertMsgContentReasonable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.assertMsgContentReasonable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks that a recently received msg has
+topic self.testTopic, that the payload starts with <a href="#id1"><span class="problematic" id="id2">msg_</span></a>,
+and that offset info is an int.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.awaitExpectedMsg">
+<tt class="descname">awaitExpectedMsg</tt><big>(</big><em>timeToWait=5.0</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.awaitExpectedMsg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.awaitExpectedMsg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for a message, and return True if the 
+msg arrived within less than 5sec. Else
+return False</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeToWait</strong> (<em>float</em>) &#8211; how many seconds maximally to wait till 
+concluding that msg won&#8217;t arrive</td>
+</tr>
+</tbody>
+</table>
+<p>:return boolean indicating whether or not a msg was received within 5sec
+:rtype: boolean</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.deliverMessage">
+<tt class="descname">deliverMessage</tt><big>(</big><em>topicName</em>, <em>rawResult</em>, <em>msgOffset</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.deliverMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.deliverMessage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.tearDown">
+<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.tearDown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.tearDown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testRemoveListener">
+<tt class="descname">testRemoveListener</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.testRemoveListener"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testRemoveListener" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testSubscription">
+<tt class="descname">testSubscription</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.testSubscription"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testSubscription" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testSynchronousCall">
+<tt class="descname">testSynchronousCall</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.testSynchronousCall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testSynchronousCall" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testTwoListeners">
+<tt class="descname">testTwoListeners</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.testTwoListeners"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testTwoListeners" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testUnsubscribe">
+<tt class="descname">testUnsubscribe</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.testUnsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testUnsubscribe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testWaitForMessage">
+<tt class="descname">testWaitForMessage</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestKafkaBus.testWaitForMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestKafkaBus.testWaitForMessage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestProducer">
+<em class="property">class </em><tt class="descclassname">kafka_bus_python.test.test_kafka_bus.</tt><tt class="descname">TestProducer</tt><big>(</big><em>topicName</em>, <em>waitForTrigger=False</em>, <em>delayBetweenMessages=None</em><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestProducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestProducer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt></p>
+<p>Producer thread. Can be called with the following
+characteristics:</p>
+<blockquote>
+<div>o Send a msg once
+o Before sending any (one or cyclically) more msgs only after method setTrigger() was called.
+o Send continuous stream of messages at given interval till stop() is called</div></blockquote>
+<p>Message have content msg_n, where n is a rising integer.</p>
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestProducer.mostRecentMsgNum">
+<tt class="descname">mostRecentMsgNum</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestProducer.mostRecentMsgNum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestProducer.mostRecentMsgNum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestProducer.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestProducer.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestProducer.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestProducer.setTrigger">
+<tt class="descname">setTrigger</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestProducer.setTrigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestProducer.setTrigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kafka_bus_python.test.test_kafka_bus.TestProducer.stop">
+<tt class="descname">stop</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kafka_bus_python/test/test_kafka_bus.html#TestProducer.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kafka_bus_python.test.test_kafka_bus.TestProducer.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">test Package</a><ul>
+<li><a class="reference internal" href="#module-kafka_bus_python.test.echo_service"><tt class="docutils literal"><span class="pre">echo_service</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-kafka_bus_python.test.test_kafka_bus"><tt class="docutils literal"><span class="pre">test_kafka_bus</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="kafka_bus_python.html"
+                        title="previous chapter">kafka_bus_python Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/kafka_bus_python.test.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kafka_bus_python.html" title="kafka_bus_python Package"
+             >previous</a> |</li>
+        <li><a href="index.html">Schoolbus-Kafka-Python 0.1 documentation</a> &raquo;</li>
+          <li><a href="kafka_bus_python.html" >kafka_bus_python Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Andreas Paepcke.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

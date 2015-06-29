@@ -5,10 +5,14 @@ Created on May 19, 2015
 '''
 
 '''
+Main module for Kafka based SchoolBus implementation.
+For examples of modules that use this class, see kafka_bus_modules
+
+
 TODO: 
-   o Logger should include module name
-   o Do error responses in synchronous calls make it to LTI browser?
-   o Write channel to browser
+   * Logger should include module name
+   * Do error responses in synchronous calls make it to LTI browser?
+   * Write-channel from modules to browser iFrame or page
 '''
 
 from datetime import datetime
@@ -27,7 +31,7 @@ from kafka.producer.simple import SimpleProducer
 from kafka_bus_exceptions import SyncCallTimedOut, SyncCallRuntimeError, \
     BadInformation
 from kafka_bus_python.bus_message import BusMessage
-from kafka_bus_python.kafka_bus_utils import JSONEncoderBusExtended
+from kafka_bus_python.kafka_bus_utils import _JSONEncoderBusExtended
 from kafka_bus_python.topic_waiter import TopicWaiter
 
 
@@ -35,14 +39,20 @@ class BusAdapter(object):
     '''
     The BusAdapter class is intended to be imported to bus modules.
     Instances of this class provide the software bus illusion over
-    Kafka. The most important methods are:
+    Kafka. Public methods are:
         
         * publish()
         * waitForMessage()
         * subscribeToTopic()
         * unSubscribeFromTopic()
+        * addTopicListener()
+        * removeTopicListener()
+        * mySubscriptions()
+        * returnError()
+        * close()
+        
     
-    In addition, clients of this class may install multiple listeners
+    Clients of this class may install multiple listeners
     for any given topic. The publish() method may be used asynchronously,
     just to send a message to subscribing modules on the bus, or
     synchronously like a remote procedure call.
@@ -50,11 +60,13 @@ class BusAdapter(object):
     The BusAdapter wraps payloads into a JSON structure
     as follows: 
     
-    'id'     : <RFC 4122 UUID Version 4>   # e.g. 'b0f4259e-3d01-44bd-9eb3-25981c2dc643'
-    'type'   : {req | resp}
-    'status' : { OK | ERROR }
-    'time'   : <ISO 8601>                  # e.g. '2015-05-31T17:13:41.957350'
-    'content': <text>
+    ::
+    
+    	'id'     : <RFC 4122 UUID Version 4>   # e.g. 'b0f4259e-3d01-44bd-9eb3-25981c2dc643'
+    	'type'   : {req | resp}
+    	'status' : { OK | ERROR }
+    	'time'   : <ISO 8601>                  # e.g. '2015-05-31T17:13:41.957350'
+    	'content': <text>
     
     It is the responsibility of listener functions to 
     strip this header away, if desired. For an example
@@ -63,24 +75,24 @@ class BusAdapter(object):
     
     '''
     
-    LEGAL_MSG_TYPES = ['req', 'resp']
-    LEGAL_STATUS    = ['OK', 'ERROR']
+    _LEGAL_MSG_TYPES = ['req', 'resp']
+    _LEGAL_STATUS    = ['OK', 'ERROR']
     
-    DEFAULT_KAFKA_LISTEN_PORT = 9092
-    KAFKA_SERVERS = [('localhost', DEFAULT_KAFKA_LISTEN_PORT),
-                     ('mono.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
-                     ('datastage.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
+    _DEFAULT_KAFKA_LISTEN_PORT = 9092
+    _KAFKA_SERVERS = [('localhost', _DEFAULT_KAFKA_LISTEN_PORT),
+                     ('mono.stanford.edu', _DEFAULT_KAFKA_LISTEN_PORT),
+                     ('datastage.stanford.edu', _DEFAULT_KAFKA_LISTEN_PORT),
                      ]
 
-#     KAFKA_SERVERS = [('mono.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
-#                      ('localhost', DEFAULT_KAFKA_LISTEN_PORT),
-#                      ('datastage.stanford.edu', DEFAULT_KAFKA_LISTEN_PORT),
+#     _KAFKA_SERVERS = [('mono.stanford.edu', _DEFAULT_KAFKA_LISTEN_PORT),
+#                      ('localhost', _DEFAULT_KAFKA_LISTEN_PORT),
+#                      ('datastage.stanford.edu', _DEFAULT_KAFKA_LISTEN_PORT),
 #                      ]
 
        
     # Remember whether logging has been initialized (class var!):
-    loggingInitialized = False
-    logger = None
+    _loggingInitialized = False
+    _logger = None
 
     def __init__(self, 
                  kafkaHost=None, 
@@ -93,10 +105,10 @@ class BusAdapter(object):
         Initialize communications with Kafka.
 
         :param kafkaHost: hostname or ip address of host where Kafka server runs.
-            If None, then BusAdapter.KAFKA_SERVERS are tried in turn.
+            If None, then BusAdapter._KAFKA_SERVERS are tried in turn.
         :type kafkaHost: {string | None}
         :param kafkaPort: port at which Kafka expects clients to come in.
-            if None, then BusAdapter.DEFAULT_KAFKA_LISTEN_PORT is used.
+            if None, then BusAdapter._DEFAULT_KAFKA_LISTEN_PORT is used.
         :type kafkaPort: {int | None}
         :param loggingLevel: detail of logging
         :type loggingLevel: {logging.DEBUG | logging.INFO | logging.ERROR}  
@@ -110,21 +122,21 @@ class BusAdapter(object):
         '''
 
         if kafkaPort is None:
-            kafkaPort = BusAdapter.DEFAULT_KAFKA_LISTEN_PORT
+            kafkaPort = BusAdapter._DEFAULT_KAFKA_LISTEN_PORT
         self.port = kafkaPort
         self.kafkaGroupId = kafkaGroupId
         
-        self.setupLogging(loggingLevel, logFile)
+        self._setupLogging(loggingLevel, logFile)
 
-        for hostPortTuple in BusAdapter.KAFKA_SERVERS:
+        for hostPortTuple in BusAdapter._KAFKA_SERVERS:
             self.logDebug('Contacting Kafka server at %s:%s...' % hostPortTuple)
             try:
                 self.kafkaClient = KafkaClient("%s:%s" % hostPortTuple)
             except KafkaUnavailableError:
                 # Have we just contacted the last of the available
                 # servers?
-                if hostPortTuple == BusAdapter.KAFKA_SERVERS[-1]:
-                    raise KafkaUnavailableError("No Kafka server found running at any of %s." % str(BusAdapter.KAFKA_SERVERS))
+                if hostPortTuple == BusAdapter._KAFKA_SERVERS[-1]:
+                    raise KafkaUnavailableError("No Kafka server found running at any of %s." % str(BusAdapter._KAFKA_SERVERS))
                 else:
                     continue
             self.logDebug('Successfully contacted Kafka server at %s:%s...' % hostPortTuple)
@@ -141,18 +153,18 @@ class BusAdapter(object):
         # called with just the remaining positional/keyword parms.
         # In this case: see method :func:`addTopicListener`.
         
-        # This way we can by default pass :func:`deliverResult` to a
+        # This way we can by default pass :func:`_deliverResult` to a
         # TopicWaiter instance, and thereby cause it to invoke our
-        # deliverResult() *method* (which takes the hidden 'self.'
+        # _deliverResult() *method* (which takes the hidden 'self.'
         # Yet other callers to subscribeToTopic() can specify 
         # a *function* which only takes the non-self parameters 
         # specified in method :func:`addTopicListener`. 
         
-        self.resultCallback    = partial(self.deliverResult)
+        self.resultCallback    = partial(self._deliverResult)
         
         # A function that will be called when the result to
         # a synchronous call arrives:
-        self.syncResultWaiter  = partial(self.awaitSynchronousReturn)
+        self.syncResultWaiter  = partial(self._awaitSynchronousReturn)
         
         # Dict mapping topic names to thread objects that listen
         # to the respective topic. Used by subscribeToTopic() and
@@ -166,7 +178,7 @@ class BusAdapter(object):
         
         # Dict used for synchronous calls: the dict maps
         # msg UUIDs to the results of a call. Set in 
-        # awaitSynchronousReturn(), and emptied in publish()
+        # _awaitSynchronousReturn(), and emptied in publish()
         self.resDict = {}
 
 # --------------------------  Pulic Methods ---------------------
@@ -220,16 +232,16 @@ class BusAdapter(object):
         :type timeout: float
         :param auth: reserved for later authentication mechanism.
         :type auth: not yet known
-        :return return value is only defined for synchronous invocation.
-        :rtype string
-        :raise ValueError if targeted topic name is not provided in a msg object,
+        :return: value is only defined for synchronous invocation.
+        :rtype: string
+        :raises ValueError: if targeted topic name is not provided in a msg object,
             or explicitly in the topicName parameter.
-        :raise ValueError if illegal message type is passed in.
-        :raise BadInformation if Kafka does not recognize the provided topic
+        :raises ValueError: if illegal message type is passed in.
+        :raises BadInformation: if Kafka does not recognize the provided topic
             **and** Kafka is not configured to create topics on the fly.
-        :raise SyncCallTimedOut if no response is received to a synchronous call
+        :raises SyncCallTimedOut: if no response is received to a synchronous call
             within the provided timeout period.
-        :raise SyncCallRuntimeError if a message received in response to a 
+        :raises SyncCallRuntimeError: if a message received in response to a 
             synchronous call cannot be parsed.
         '''
 
@@ -264,8 +276,8 @@ class BusAdapter(object):
         else:
             msgUuid = msgId
         # Sanity check on message type:
-        if msgType not in BusAdapter.LEGAL_MSG_TYPES:
-            raise ValueError('Legal message types are %s' % str(BusAdapter.LEGAL_MSG_TYPES))
+        if msgType not in BusAdapter._LEGAL_MSG_TYPES:
+            raise ValueError('Legal message types are %s' % str(BusAdapter._LEGAL_MSG_TYPES))
         
         msgDict = dict(zip(['id', 'type', 'time', 'content'],
                            [msgUuid, msgType, datetime.now().isoformat(), msg]))
@@ -313,7 +325,7 @@ class BusAdapter(object):
             self.producer.send_messages(topicName, json.dumps(msgDict))
             
             # ... and wait for the answer message to invoke
-            # self.awaitSynchronousReturn():
+            # self._awaitSynchronousReturn():
             resBeforeTimeout = self.resultArrivedEvent.wait(timeout)
             
             # Result arrived, and was placed into
@@ -365,7 +377,7 @@ class BusAdapter(object):
         saving a subsequent call to addTopicListener(). See addTopicListener()
         for details.
         
-        If deliveryCallback is absent or None, then method deliverResult()
+        If deliveryCallback is absent or None, then method _deliverResult()
         in this class will be used. That method is intended to be a 
         placeholder with no side effects.
         
@@ -380,7 +392,7 @@ class BusAdapter(object):
         :param kafkaLiveCheckTimeout: timeout in (fractional) seconds to
             wait when checking for a live Kafka server being available.
         :type kafkaLiveCheckTimeout: float
-        :raise KafkaServerNotFound when no Kafka server responds
+        :raises KafkaServerNotFound: when no Kafka server responds
         '''
         
         if deliveryCallback is None:
@@ -455,16 +467,16 @@ class BusAdapter(object):
         '''
         Add a listener function for a topic for which a
         subscription already exists. Parameter deliverCallback
-        must be a function accepting parameters:
-            topicName, rawResult, msgOffset
+        must be a function accepting parameters: topicName, rawResult, msgOffset
         It is an error to call the method without first
         having subscribed to the topic.
         
-        :param topicName:
-        :type topicName:
-        :param deliveryCallback:
-        :type deliveryCallback:
-        :raise NameError if caller has not previously subscribed to topicName.
+        :param topicName: name of topic to add
+        :type topicName: String
+        :param deliveryCallback: function to call when message to this topic arrives
+        :type deliveryCallback: <function(topicName, rawResult, msgOffset)
+        :raises NameError: if caller has not previously subscribed to topicName.
+
         '''
         
         if deliveryCallback != types.FunctionType and type(deliveryCallback) != functools.partial:
@@ -539,9 +551,9 @@ class BusAdapter(object):
         :type topicName:
         :param timeout: seconds (or fractions of second) to wait.
         :type timeout: float
-        :returns True if a message arrived in time, else returnes False
-        :rtype boolean
-        :raise NameError on attempt to wait for a topic for which no subscription exists.
+        :returns: True if a message arrived in time, else returnes False
+        :rtype: boolean
+        :raises NameError: on attempt to wait for a topic for which no subscription exists.
         '''
         
         try:
@@ -551,14 +563,34 @@ class BusAdapter(object):
             raise NameError("Attempt to wait for messages on topic %s, which was never subscribed to." % topicName)
  
     def mySubscriptions(self):
+        '''
+        Return a list of topic names to which this bus adapter is subscribed.
+        
+        :return: List of topics to which caller is subscribed
+        :rtype: [String]
+        '''
         return self.topicEvents.keys()
         
     def returnError(self, req_key, topicName, errMsg):
+        '''
+        Convencience method when handling an incoming message.
+        Returns a message that is marked as an error return.
+        
+        :param req_key: key of the incoming message; it will be used in the return message as well.
+        :type req_key: String
+        :param topicName: name of topic to use in the return message
+        :type topicName: String
+        :param errMsg: error message to include in the return message
+        :type errMsg: String
+        '''
+        
         errMsg = {'resp_key'    : req_key,
+                  'type'        : 'resp',
                   'status'      : 'ERROR',
+                  'time'        : datetime.now().isoformat(),
                   'content'     : errMsg
                  }
-        errMsgJSON = JSONEncoderBusExtended.makeJSON(errMsg)
+        errMsgJSON = _JSONEncoderBusExtended.makeJSON(errMsg)
         self.bus.publish(errMsgJSON, topicName)
       
     def close(self):
@@ -576,7 +608,7 @@ class BusAdapter(object):
 # --------------------------  Private Methods ---------------------
 
 
-    def deliverResult(self, topicName, rawResult, msgOffset):
+    def _deliverResult(self, topicName, rawResult, msgOffset):
         '''
         Simple default message delivery callback. Just prints 
         topic name and content. Override in subclass to get 
@@ -596,7 +628,7 @@ class BusAdapter(object):
         print('Msg at offset %d: %s' % (msgOffset,rawResult))
         
 
-    def awaitSynchronousReturn(self, topicName, rawResult, msgOffset):
+    def _awaitSynchronousReturn(self, topicName, rawResult, msgOffset):
         '''
         A callback for TopicWaiter. Invoked from a different thread!!
         This callback is installed by publish() when a synchronous
@@ -655,18 +687,18 @@ class BusAdapter(object):
             return
     
     
-    def setupLogging(self, loggingLevel, logFile):
-        if BusAdapter.loggingInitialized:
+    def _setupLogging(self, loggingLevel, logFile):
+        if BusAdapter._loggingInitialized:
             # Remove previous file or console handlers,
             # else we get logging output doubled:
-            BusAdapter.logger.handlers = []
+            BusAdapter._logger.handlers = []
             
         # Set up logging:
-        # A logger named SchoolBusLog:
-        BusAdapter.logger = logging.getLogger('SchoolBusLog')
-        BusAdapter.logger.setLevel(loggingLevel)
+        # A _logger named SchoolBusLog:
+        BusAdapter._logger = logging.getLogger('SchoolBusLog')
+        BusAdapter._logger.setLevel(loggingLevel)
         
-        # A msg formatter that shows datetime, logger name, 
+        # A msg formatter that shows datetime, _logger name, 
         # the log level of the message, and the msg.
         # The datefmt=None causes ISO8601 to be used:
         
@@ -684,26 +716,59 @@ class BusAdapter(object):
 #         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 #         fh.setFormatter(formatter)
 #         ch.setFormatter(formatter)
-        # Add the handler to the logger
-        BusAdapter.logger.addHandler(handler)
+        # Add the handler to the _logger
+        BusAdapter._logger.addHandler(handler)
         #**********************
-        #BusAdapter.logger.info("Info for you")
-        #BusAdapter.logger.warn("Warning for you")
-        #BusAdapter.logger.debug("Debug for you")
+        #BusAdapter._logger.info("Info for you")
+        #BusAdapter._logger.warn("Warning for you")
+        #BusAdapter._logger.debug("Debug for you")
         #**********************
         
-        BusAdapter.loggingInitialized = True
+        BusAdapter._loggingInitialized = True
 
 
     def logWarn(self, msg):
-        BusAdapter.logger.warn(msg)
+        '''
+        Loccally log a warning message using the Python logging facility.
+        The _logger name is 'SchoolBusLog'. Change format or _logger
+        name by modifying _setupLogging().
+        
+        :param msg: message to log
+        :type msg: String
+        '''
+        BusAdapter._logger.warn(msg)
 
     def logInfo(self, msg):
-        BusAdapter.logger.info(msg)
+        '''
+        Locally log an info message using the Python logging facility.
+        The _logger name is 'SchoolBusLog'. Change format or _logger
+        name by modifying _setupLogging().
+        
+        :param msg: message to log
+        :type msg: String
+        '''
+        BusAdapter._logger.info(msg)
      
     def logError(self, msg):
-        BusAdapter.logger.error(msg)
+        '''
+        Locally log an error message using the Python logging facility.
+        The _logger name is 'SchoolBusLog'. Change format or _logger
+        name by modifying _setupLogging().
+        
+        :param msg: message to log
+        :type msg: String
+        '''
+        
+        BusAdapter._logger.error(msg)
 
     def logDebug(self, msg):
-        BusAdapter.logger.debug(msg)
+        '''
+        Locally log a debug message using the Python logging facility.
+        The _logger name is 'SchoolBusLog'. Change format or _logger
+        name by modifying _setupLogging().
+        
+        :param msg: message to log
+        :type msg: String
+        '''
+        BusAdapter._logger.debug(msg)
 
