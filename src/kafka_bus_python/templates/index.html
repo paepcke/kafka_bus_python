@@ -2,7 +2,7 @@
 <html ng-app="ScorePoster">
 
   <head>
-    
+
     <title>metapod</title>
 
     <!-- AngularJS -->
@@ -30,12 +30,9 @@
         <input type="button" ng-click="submit(form)" value="Post score..." ><br>
       </form><br>
 
-      <div ng-repeat="name in names track by $index">
-        <h4>Grades for {{name}}&nbsp;</h4>
-        <span ng-repeat="grade in grades track by $index">
-          <p>{{grade}}</p>
-        </span>
-      </div>
+      <span ng-repeat="grade in grades track by $index">
+        <p>{{grade}}</p>
+      </span>
 
     </div>
     {% endraw %}

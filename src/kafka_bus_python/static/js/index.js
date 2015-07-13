@@ -6,11 +6,14 @@ app.controller('FormControl', ['$scope', '$http', function($scope, $http) {
   $scope.names = [];
   $scope.submit = function(form) {
     var scoreData = angular.toJson(form);
-    $http.post('/bus_test', scoreData)
-    .success(function (response) {
-      $scope.grades.push(response.grade);
-      $scope.names.push(response.uid);
-    });
+    var iters = 10000;
+    for (i=0; i<iters; i++) {
+      $http.post('/bus_test', scoreData)
+      .success(function (response) {
+        $scope.grades.push(response.grade);
+        $scope.names.push(response.uid);
+      });
+    }
   };
 }]);
 
